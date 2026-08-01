@@ -1,0 +1,35 @@
+---
+/**
+ * The "eyebrow label + <h2>" title pattern repeated at the top of most
+ * homepage sections (Featured Projects, Design Process, FAQ). Extracted
+ * to keep that pattern consistent instead of hand-copied per section -
+ * it had already drifted once (one section's heading missing a class
+ * the others had) before this existed.
+ *
+ * Deliberately NOT used by About.astro's heading, even though it looks
+ * similar at a glance: About's heading is a full prose sentence with
+ * different width/line-height treatment, sitting inside a larger block
+ * alongside body copy and a CTA - forcing it through this component
+ * would mean adding override props for the one caller that doesn't
+ * actually fit the "short title" shape this is built for.
+ *
+ * `data-reveal` is applied here (not by each caller) so every section
+ * heading gets the scroll-in fade automatically - see
+ * src/scripts/motion.ts's initReveals.
+ */
+interface Props {
+  eyebrow: string;
+  heading: string;
+  /** Extra classes for the outer wrapper (e.g. spacing/alignment like `mb-14 text-center`). */
+  class?: string;
+  /** Extra classes for the <h2> itself (e.g. `max-w-xl` to constrain a long title's line length). */
+  headingClass?: string;
+}
+
+const { eyebrow, heading, class: className, headingClass } = Astro.props;
+---
+
+<div class:list={[className]} data-reveal>
+  <p class="font-nav mb-3 text-xs uppercase tracking-[0.3em] text-terracotta">{eyebrow}</p>
+  <h2 class:list={["text-4xl md:text-5xl", headingClass]}>{heading}</h2>
+</div>

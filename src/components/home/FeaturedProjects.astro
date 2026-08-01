@@ -1,0 +1,102 @@
+---
+/**
+ * Homepage's curated project grid: up to 4 projects flagged
+ * `is_featured_on_home: true` in their frontmatter (see
+ * src/content.config.ts), most recently completed first. Renders an
+ * asymmetric magazine-style layout via `spanClasses` below (index 0
+ * gets a large 2-row hero slot, 1-2 sit alongside it, 3 spans full
+ * width beneath) - if more or fewer than 4 projects are ever featured,
+ * anything past `spanClasses[3]` falls back to an even 2-column split.
+ *
+ * Each card layers three things on top of each other, innermost first:
+ * the actual image (parallax-driven, via `data-parallax-speed`), an
+ * oversized "frame" div around it that also carries the hover-zoom
+ * effect, and an outer fixed-size "window" div that clips both. See
+ * the inline comments below for why hover-zoom and parallax had to be
+ * split onto separate elements instead of both living on the image.
+ */
+import { getCollection } from "astro:content";
+import { Image } from "astro:assets";
+import { ArrowUpRight } from "@lucide/astro";
+import SectionHeading from "../SectionHeading.astro";
+
+const allFeatured = await getCollection("projects", ({ data }) => data.is_featured_on_home);
+const projects = allFeatured
+  .sort((a, b) => b.data.completion_date.valueOf() - a.data.completion_date.valueOf())
+  .slice(0, 4);
+
+/** Grid placement per card index, matched positionally - see the layout note above. */
+const spanClasses = [
+  "md:col-span-4 md:row-span-2",
+  "md:col-span-2",
+  "md:col-span-2",
+  "md:col-span-4",
+];
+---
+
+<section class="px-6 py-24 md:px-10 md:py-32">
+  <div class="mx-auto max-w-7xl">
+    <div class="mb-14 flex flex-col justify-between gap-6 md:flex-row md:items-end">
+      <SectionHeading eyebrow="Selected Work" heading="Featured Projects" headingClass="max-w-xl" />
+      <a href="/projects" class="font-nav group flex items-center gap-2 text-xs uppercase tracking-widest text-charcoal" data-reveal>
+        View all projects
+        <ArrowUpRight class="h-4 w-4 transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
+      </a>
+    </div>
+
+    <!--
+      `md:auto-rows-[300px]` is load-bearing, not just a spacing choice:
+      without an explicit row height, each card's `md:h-full` has
+      nothing definite to resolve against once the image moved out of
+      normal flow (see the parallax frame below), and every row
+      collapsed to ~0px. It used to "work" only because the <img>'s own
+      width/height attributes were accidentally propping the row open
+      as a fallback - fragile, and broken the moment the image became
+      an absolutely-positioned parallax child instead of a normal-flow one.
+    -->
+    <div class="grid grid-cols-1 gap-6 md:grid-cols-6 md:auto-rows-[300px]">
+      {projects.map((project, i) => (
+        <a
+          href={`/projects/${project.data.slug}`}
+          class:list={["group relative block overflow-hidden bg-sand", spanClasses[i] ?? "md:col-span-3"]}
+        >
+          <!-- Outer: the fixed-size visible window (per the grid cell). -->
+          <div class="relative aspect-[4/5] w-full overflow-hidden md:aspect-auto md:h-full">
+            <!--
+              Middle: the oversized (-m-32) parallax frame, which is also
+              where the hover-zoom transform lives. It has to live here
+              rather than on the <Image> itself: motion.ts sets the
+              image's `transform` directly via JS every frame while it's
+              in view, which would fight with (and get silently
+              overwritten by) a CSS `group-hover:scale-105` on that same
+              element. Putting the hover-zoom on this wrapper instead
+              means it animates via the separate `scale` CSS property
+              Tailwind v4 uses for scale utilities - independent of the
+              image's own `transform`, so both effects coexist cleanly.
+            -->
+            <div class="absolute inset-0 -m-32 overflow-hidden transition-transform duration-700 ease-out group-hover:scale-105">
+              <Image
+                src={project.data.hero_media.url}
+                alt={project.data.hero_media.alt}
+                width={1200}
+                height={1500}
+                quality={65}
+                format="webp"
+                class="h-full w-full object-cover will-change-transform"
+                data-parallax-speed="0.7"
+                loading="lazy"
+              />
+            </div>
+          </div>
+          <div class="absolute inset-0 bg-gradient-to-t from-charcoal/70 via-charcoal/0 to-transparent"></div>
+          <div class="absolute inset-x-0 bottom-0 p-6 text-alabaster">
+            <p class="font-nav text-[11px] uppercase tracking-[0.2em] text-alabaster/70">
+              {project.data.discipline} · {project.data.location}
+            </p>
+            <h3 class="mt-2 font-serif text-2xl md:text-3xl">{project.data.title}</h3>
+          </div>
+        </a>
+      ))}
+    </div>
+  </div>
+</section>

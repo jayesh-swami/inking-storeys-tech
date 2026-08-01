@@ -1,0 +1,94 @@
+---
+/**
+ * Base page shell used by every route: HTML document scaffold, global
+ * CSS, SEO/social meta tags, the site-wide chrome (Preloader, Nav,
+ * Footer), and the two scroll/interaction scripts that every page
+ * needs (smooth scroll + parallax + reveals, and the generic carousel
+ * controller). Page content goes in the default slot, inside <main>.
+ */
+import { ClientRouter } from "astro:transitions";
+import "../styles/global.css";
+import Preloader from "../components/Preloader.astro";
+import Nav from "../components/Nav.astro";
+import Footer from "../components/Footer.astro";
+
+interface Props {
+  /** Rendered as "{title} · Inking Storeys" in the <title> tag and used verbatim for og:title/twitter:title. */
+  title: string;
+  description?: string;
+  /**
+   * Absolute or root-relative path to a page-specific social-share
+   * image (ideally 1200x630). When omitted, og:image/twitter:image are
+   * left out entirely rather than pointing at a placeholder - there's
+   * no site-wide default social image in `public/` yet. Add one (e.g.
+   * `public/og-default.jpg`) and default this prop to it once it
+   * exists.
+   */
+  image?: string;
+}
+
+const {
+  title,
+  description = "Inking Storeys — architecture and interior design atelier crafting quiet, material-led spaces across India.",
+  image,
+} = Astro.props;
+
+const pageTitle = `${title} · Inking Storeys`;
+// Astro.site comes from the `site` field in astro.config.mjs - update
+// that once the real production domain is known, and this (along with
+// the sitemap and robots.txt) will follow automatically.
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+const ogImageURL = image ? new URL(image, Astro.site) : undefined;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="canonical" href={canonicalURL} />
+    <meta name="description" content={description} />
+    <title>{pageTitle}</title>
+
+    <!-- Open Graph (Facebook, LinkedIn, WhatsApp link previews, etc). -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Inking Storeys" />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonicalURL} />
+    {ogImageURL && <meta property="og:image" content={ogImageURL} />}
+
+    <!-- Twitter Card. summary_large_image needs an image to render as
+         intended; fall back to the plain `summary` card when this page
+         didn't supply one. -->
+    <meta name="twitter:card" content={ogImageURL ? "summary_large_image" : "summary"} />
+    <meta name="twitter:title" content={pageTitle} />
+    <meta name="twitter:description" content={description} />
+    {ogImageURL && <meta name="twitter:image" content={ogImageURL} />}
+
+    <!-- Enables Astro's View Transitions router: same-origin nav links
+         are intercepted and swapped client-side instead of triggering a
+         full page reload. This is why several components (Nav, motion.ts)
+         re-initialize on an `astro:page-load` event rather than assuming
+         their top-level script only ever runs once. -->
+    <ClientRouter />
+  </head>
+  <body class="bg-alabaster text-charcoal">
+    <Preloader />
+    <Nav />
+    <main>
+      <slot />
+    </main>
+    <Footer />
+    <!-- Global behaviour every page needs: smooth wheel-scroll, the
+         parallax effect, and scroll-triggered reveals (motion.ts), plus
+         the generic carousel controller driving both the Hero slider and
+         the Testimonials slider (carousel.ts). Both are small enough that
+         Astro inlines them directly into the page rather than emitting a
+         separate request for them - see CHANGELOG.md for how large this
+         used to be before GSAP and Lenis were removed. -->
+    <script src="../scripts/motion.ts"></script>
+    <script src="../scripts/carousel.ts"></script>
+  </body>
+</html>

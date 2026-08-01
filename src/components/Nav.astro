@@ -1,0 +1,199 @@
+---
+/**
+ * Site navigation, in two responsive forms sharing the same link data:
+ *
+ * - At `lg` (1024px) and wider: the wordmark plus every link shown
+ *   inline in the fixed header - no menu button at all, matching the
+ *   reference site big.dk's desktop nav.
+ * - Below `lg`: the header shows just the wordmark, which morphs into
+ *   a hamburger icon on hover/focus and opens a full-screen curtain
+ *   overlay with the full link list plus contact info and socials.
+ *
+ * "Home" is included in the curtain (where the wordmark isn't visible
+ * as a persistent way back) but omitted from the desktop inline list,
+ * since the wordmark itself already serves as the home link there.
+ */
+import { ArrowUpRight } from "@lucide/astro";
+import SocialLinks from "./SocialLinks.astro";
+
+const links = [
+  { label: "Home", href: "/" },
+  { label: "Projects", href: "/projects" },
+  { label: "About", href: "/about" },
+  { label: "Journal", href: "/journal" },
+  { label: "Contact", href: "/contact" },
+];
+
+const desktopLinks = links.filter((link) => link.label !== "Home");
+---
+
+<header
+  id="site-header"
+  class="fixed inset-x-0 top-0 z-50 flex items-center justify-between px-6 py-3 md:px-10 md:py-4"
+>
+  <a href="/" class="font-serif text-lg tracking-tight text-charcoal md:text-xl">
+    Inking Storeys
+  </a>
+
+  <nav class="hidden items-center gap-8 lg:flex xl:gap-10">
+    {desktopLinks.map((link) => (
+      <a
+        href={link.href}
+        class="font-nav text-xs uppercase tracking-widest text-charcoal transition-colors hover:text-terracotta"
+      >
+        {link.label}
+      </a>
+    ))}
+  </nav>
+
+  <!--
+    Icon-only hamburger, visible only below `lg`. All of its visual
+    states are driven by the `aria-expanded` attribute the script below
+    toggles, via Tailwind's `aria-*`/`group-aria-*` variants - no
+    separate JS-managed CSS classes for open/closed needed:
+      - the three bars morph into an "X" (rotate + fade the middle bar)
+      - the icon's own color flips from charcoal to alabaster, so it
+        stays visible against the dark curtain overlay once open
+        (rather than the dark-on-dark bug this button used to have)
+  -->
+  <button
+    id="menu-toggle"
+    type="button"
+    aria-expanded="false"
+    aria-controls="menu-overlay"
+    aria-label="Open menu"
+    class="group relative flex h-7 w-7 items-center justify-center text-charcoal aria-expanded:text-alabaster lg:hidden"
+  >
+    <span class="flex w-5 flex-col gap-[4px]">
+      <span class="h-px w-full bg-current transition-transform duration-300 group-aria-expanded:translate-y-[5px] group-aria-expanded:rotate-45"></span>
+      <span class="h-px w-full bg-current transition-opacity duration-300 group-aria-expanded:opacity-0"></span>
+      <span class="h-px w-full bg-current transition-transform duration-300 group-aria-expanded:-translate-y-[5px] group-aria-expanded:-rotate-45"></span>
+    </span>
+  </button>
+</header>
+
+<div
+  id="menu-overlay"
+  class="fixed inset-0 z-40 flex translate-y-[-100%] flex-col justify-between bg-charcoal px-6 py-24 text-alabaster transition-transform duration-700 ease-[cubic-bezier(0.76,0,0.24,1)] md:px-16 md:py-28 lg:hidden"
+  data-native-scroll
+  role="dialog"
+  aria-modal="true"
+  aria-label="Site menu"
+  inert
+>
+  <nav class="flex flex-col gap-2 md:gap-4">
+    {links.map((link, i) => (
+      <a
+        href={link.href}
+        class="group flex items-baseline gap-4 border-b border-alabaster/10 py-3 font-serif text-4xl transition-colors hover:text-terracotta-light md:text-6xl"
+      >
+        <span class="font-nav text-xs text-taupe">0{i + 1}</span>
+        {link.label}
+        <ArrowUpRight class="ml-auto h-6 w-6 -translate-x-2 opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100 md:h-8 md:w-8" />
+      </a>
+    ))}
+  </nav>
+
+  <div class="font-nav flex flex-col gap-6 text-xs uppercase text-taupe md:flex-row md:items-end md:justify-between">
+    <div class="flex flex-col gap-1">
+      <p class="text-alabaster/60">Studios</p>
+      <p>Mumbai — Jaipur — Goa</p>
+    </div>
+    <div class="flex flex-col gap-1">
+      <p class="text-alabaster/60">Get in touch</p>
+      <a href="mailto:studio@inkingstoreys.com" class="hover:text-terracotta-light">studio@inkingstoreys.com</a>
+    </div>
+    <SocialLinks class="gap-4" />
+  </div>
+</div>
+
+<script>
+  /**
+   * Wires up the hamburger button <-> curtain overlay, treating the
+   * overlay as a modal dialog per the WAI-ARIA dialog pattern: opening
+   * it moves focus inside, Tab/Shift+Tab cycle only within it while
+   * open, Escape closes it, and closing returns focus to the button
+   * that opened it. The `inert` attribute (toggled below) additionally
+   * removes the overlay's links from the tab order entirely while
+   * closed - without it, a keyboard user tabbing through the closed
+   * page would still land on menu links sitting off-screen above the
+   * visible content.
+   *
+   * `currentToggle`/`currentOverlay`/`open` are module-level (not
+   * function-local) so the `document`-level listeners at the bottom -
+   * keydown and astro:before-swap - can be registered exactly once
+   * when this script first evaluates, rather than once per navigation.
+   * setupMenu() itself still re-runs on every `astro:page-load` to
+   * pick up the fresh toggle/overlay elements Astro's View Transitions
+   * router swaps in, and to attach click handlers to them - those are
+   * element-level listeners that naturally get garbage collected along
+   * with the old elements, so re-adding them each time isn't a leak.
+   * Re-registering the document-level ones on every navigation would
+   * be: each one stacks on top of the last instead of replacing it.
+   */
+  let currentToggle: HTMLElement | null = null;
+  let currentOverlay: HTMLElement | null = null;
+  let open = false;
+
+  const focusableSelector = "a[href], button:not([disabled])";
+
+  function setState(next: boolean) {
+    if (!currentToggle || !currentOverlay) return;
+    const wasOpen = open;
+    open = next;
+
+    currentToggle.setAttribute("aria-expanded", String(open));
+    currentToggle.setAttribute("aria-label", open ? "Close menu" : "Open menu");
+    currentOverlay.classList.toggle("translate-y-[-100%]", !open);
+    currentOverlay.classList.toggle("translate-y-0", open);
+    currentOverlay.toggleAttribute("inert", !open);
+    document.documentElement.style.overflow = open ? "hidden" : "";
+
+    if (open) {
+      currentOverlay.querySelector<HTMLElement>(focusableSelector)?.focus();
+    } else if (wasOpen) {
+      currentToggle.focus();
+    }
+  }
+
+  function handleKeydown(event: KeyboardEvent) {
+    if (!open || !currentOverlay) return;
+
+    if (event.key === "Escape") {
+      setState(false);
+      return;
+    }
+
+    if (event.key !== "Tab") return;
+
+    const focusable = Array.from(currentOverlay.querySelectorAll<HTMLElement>(focusableSelector));
+    if (!focusable.length) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+
+    // Wrap Tab/Shift+Tab around the ends of the overlay's focusable
+    // elements instead of letting focus escape into the (inert, but
+    // better safe) page behind it.
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  }
+
+  function setupMenu() {
+    currentToggle = document.getElementById("menu-toggle");
+    currentOverlay = document.getElementById("menu-overlay");
+    if (!currentToggle || !currentOverlay) return;
+
+    open = false;
+    currentToggle.addEventListener("click", () => setState(!open));
+    currentOverlay.querySelectorAll("a").forEach((a) => a.addEventListener("click", () => setState(false)));
+  }
+
+  document.addEventListener("astro:page-load", setupMenu);
+  document.addEventListener("astro:before-swap", () => setState(false));
+  document.addEventListener("keydown", handleKeydown);
+</script>

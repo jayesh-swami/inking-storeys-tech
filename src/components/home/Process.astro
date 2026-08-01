@@ -1,0 +1,56 @@
+---
+import SectionHeading from "../SectionHeading.astro";
+
+const steps = [
+  {
+    label: "Discovery",
+    description:
+      "We walk the site, study the brief, and understand how the space will actually be used before a single line is drawn.",
+  },
+  {
+    label: "Concept",
+    description:
+      "A clear design idea — massing, material palette, and spatial sequence — presented as drawings, models, and references.",
+  },
+  {
+    label: "Design Development",
+    description:
+      "The concept is resolved into detailed drawings, material samples, and coordinated structural and services plans.",
+  },
+  {
+    label: "Execution",
+    description:
+      "On-site supervision through construction and fit-out, with weekly reviews to hold the design intent through to detailing.",
+  },
+  {
+    label: "Handover",
+    description:
+      "Styling, snagging, and a final walkthrough — followed by a defects-liability check-in six months after move-in.",
+  },
+];
+---
+
+<section class="px-6 py-24 md:px-10 md:py-32">
+  <div class="mx-auto max-w-5xl">
+    <SectionHeading eyebrow="How We Work" heading="Our Design Process" class="mb-14" headingClass="max-w-xl" />
+
+    <div class="divide-y divide-charcoal/10 border-y border-charcoal/10">
+      {steps.map((step, i) => (
+        <details class="group py-6" open={i === 0}>
+          <summary class="flex cursor-pointer list-none items-center justify-between gap-6">
+            <div class="flex items-baseline gap-5 md:gap-8">
+              <span class="font-nav text-xs text-terracotta">0{i + 1}</span>
+              <span class="font-serif text-2xl md:text-3xl">{step.label}</span>
+            </div>
+            <span class="font-nav shrink-0 text-xl text-charcoal/40 transition-transform duration-300 group-open:rotate-45">
+              +
+            </span>
+          </summary>
+          <p class="font-body mt-4 max-w-2xl pl-10 text-sm leading-relaxed text-charcoal/65 md:pl-12">
+            {step.description}
+          </p>
+        </details>
+      ))}
+    </div>
+  </div>
+</section>

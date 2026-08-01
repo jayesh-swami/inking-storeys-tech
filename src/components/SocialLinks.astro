@@ -1,0 +1,35 @@
+---
+/**
+ * The studio's social links: a single source of truth for which icon
+ * links to Instagram/LinkedIn/Facebook. Used by both the mobile
+ * curtain menu (Nav.astro) and the footer, which previously
+ * hand-duplicated this markup with slightly different, driftable
+ * results - the curtain menu was missing Facebook, which the footer
+ * had. Update the URLs here (still placeholder "#" values) and both
+ * places update together.
+ */
+import Instagram from "./icons/Instagram.astro";
+import LinkedIn from "./icons/LinkedIn.astro";
+import Facebook from "./icons/Facebook.astro";
+
+const socials = [
+  { label: "Instagram", href: "#", icon: Instagram },
+  { label: "LinkedIn", href: "#", icon: LinkedIn },
+  { label: "Facebook", href: "#", icon: Facebook },
+];
+
+interface Props {
+  /** Extra classes for the wrapping <div> - each caller controls its own gap/color to match its surrounding context (e.g. inherited text color, icon spacing). */
+  class?: string;
+}
+
+const { class: className } = Astro.props;
+---
+
+<div class:list={["flex", className]}>
+  {socials.map(({ label, href, icon: Icon }) => (
+    <a href={href} aria-label={label} class="hover:text-terracotta-light">
+      <Icon class="h-4 w-4" />
+    </a>
+  ))}
+</div>

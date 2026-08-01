@@ -1,0 +1,60 @@
+---
+/**
+ * Editorial "About the Studio" split: statement copy on the left, a
+ * single portrait image with the parallax "window" effect on the
+ * right (see src/scripts/motion.ts for how `data-parallax-speed` is
+ * interpreted, and the -m-32 frame comment on the wrapper div below
+ * for why the oversized/clipped wrapper is required for it to work
+ * without exposing empty edges as the image drifts).
+ */
+import { Image } from "astro:assets";
+---
+
+<section class="overflow-hidden bg-sand px-6 py-24 md:px-10 md:py-32">
+  <div class="mx-auto grid max-w-7xl gap-14 md:grid-cols-12 md:gap-10">
+    <div class="md:col-span-6 md:pr-8" data-reveal>
+      <p class="font-nav mb-3 text-xs uppercase tracking-[0.3em] text-terracotta">About the Studio</p>
+      <h2 class="max-w-lg text-4xl leading-tight md:text-5xl">
+        We design for how a space is lived in, not just how it photographs.
+      </h2>
+      <p class="font-body mt-8 max-w-md text-base leading-relaxed text-charcoal/70">
+        Inking Storeys is an architecture and interior design atelier working
+        across Mumbai, Jaipur, and Goa. Since our first commission, every
+        project has started from the same question: what does this site,
+        this climate, and this family actually need — before any style is
+        decided. The result is a body of work that is quiet, material-led,
+        and built to age well.
+      </p>
+      <a
+        href="/about"
+        class="font-nav mt-10 inline-flex items-center gap-2 border-b border-charcoal/40 pb-1 text-xs uppercase tracking-widest text-charcoal transition-colors hover:border-terracotta hover:text-terracotta"
+      >
+        Our Story
+      </a>
+    </div>
+
+    <div class="relative aspect-[4/5] overflow-hidden md:col-span-6 md:aspect-auto" data-reveal>
+      <!-- The "window": this outer box is the visible, fixed-size crop.
+           The inner box below is the parallax "frame" - deliberately
+           128px larger on every side (-m-32) than this window and
+           itself clipped (overflow-hidden), so motion.ts can translate
+           the image inside it up to ~80-110px in either direction
+           without ever revealing empty space at an edge. See the
+           PARALLAX_MAX_OFFSET comment in motion.ts for the exact cap
+           this buffer needs to stay ahead of. -->
+      <div class="absolute inset-0 -m-32 overflow-hidden">
+        <Image
+          src="https://images.unsplash.com/photo-1467987506553-8f3916508521"
+          alt="Studio principal reviewing drawings on site"
+          width={1200}
+          height={1500}
+          quality={68}
+          format="webp"
+          class="h-full w-full object-cover will-change-transform"
+          data-parallax-speed="0.65"
+          loading="lazy"
+        />
+      </div>
+    </div>
+  </div>
+</section>

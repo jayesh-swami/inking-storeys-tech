@@ -1,0 +1,132 @@
+---
+/**
+ * Full-screen intro splash: the wordmark fades in, holds, fades out
+ * and shrinks slightly, then the whole panel slides up off-screen to
+ * reveal the page underneath. Shown once per browser session
+ * (sessionStorage-gated) - repeat page loads within the same tab skip
+ * straight past it.
+ *
+ * The animation itself is pure CSS (`@keyframes` below), not JS. That's
+ * a deliberate choice: an earlier version drove this with a GSAP
+ * timeline, which meant a failed/slow GSAP import could leave this
+ * full-viewport opaque panel stuck on screen forever with no way to
+ * dismiss it - the worst possible failure mode for something in the
+ * critical path of every page load. CSS animations start as soon as
+ * the browser paints the element, with no JS dependency to fail. JS
+ * here is only a *progressive enhancement* layer on top: it decides
+ * whether to skip the animation at all (repeat visit, reduced-motion),
+ * locks page scroll while it plays, and removes the (by then
+ * off-screen and harmless) DOM node afterward.
+ */
+---
+
+<div id="preloader" class="fixed inset-0 z-[100] flex items-center justify-center bg-charcoal">
+  <p id="preloader-mark" class="font-serif text-alabaster text-[8vw] leading-none tracking-tight md:text-[5vw]">
+    Inking Storeys
+  </p>
+</div>
+
+<style>
+  @keyframes preloader-mark-in {
+    from {
+      opacity: 0;
+      transform: translateY(24px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes preloader-mark-out {
+    from {
+      opacity: 1;
+      transform: scale(1);
+    }
+    to {
+      opacity: 0;
+      transform: scale(0.94);
+    }
+  }
+
+  @keyframes preloader-slide-up {
+    from {
+      transform: translateY(0);
+    }
+    to {
+      transform: translateY(-100%);
+    }
+  }
+
+  /*
+   * Timeline (only runs once the JS below adds the `.run` class - see
+   * "why gate this behind JS?" note in the script):
+   *   0.0s - 0.8s   mark fades/slides in
+   *   1.1s - 1.7s   mark fades out and shrinks slightly (starts after a
+   *                 beat once fully visible, i.e. 0.8s + 0.3s hold)
+   *   1.5s - 2.3s   whole panel slides up off-screen (starts slightly
+   *                 before the mark finishes fading, for a bit of overlap)
+   * The two animations on #preloader-mark share one `animation-delay`
+   * list, in the same order as the animations themselves (0s, then 1.1s).
+   */
+  #preloader.run #preloader-mark {
+    animation:
+      preloader-mark-in 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards,
+      preloader-mark-out 0.6s ease-in 1.1s forwards;
+  }
+
+  #preloader.run {
+    animation: preloader-slide-up 0.8s cubic-bezier(0.76, 0, 0.24, 1) 1.5s forwards;
+  }
+</style>
+
+<script>
+  function runPreloader() {
+    const el = document.getElementById("preloader");
+    if (!el) return;
+
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    if (sessionStorage.getItem("inking-storeys-preloaded") || reduceMotion) {
+      // Already shown this session, or the visitor asked for reduced
+      // motion - skip straight to removing it, no animation.
+      el.remove();
+      return;
+    }
+
+    sessionStorage.setItem("inking-storeys-preloaded", "1");
+    document.documentElement.style.overflow = "hidden";
+
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      document.documentElement.style.overflow = "";
+      el.remove();
+    };
+
+    el.addEventListener("animationend", (event) => {
+      // #preloader has multiple animations running on descendants
+      // (see the <style> block); only react to its own slide-up, which
+      // is the last step and the one that actually needs cleanup.
+      if (event.animationName === "preloader-slide-up") finish();
+    });
+
+    // Safety net: guarantee cleanup even if the animation is interrupted
+    // (backgrounded tab, dropped frames) and its end event never fires.
+    setTimeout(finish, 3000);
+
+    // Why gate the CSS animation behind adding this class instead of
+    // letting it run unconditionally the moment the element paints?
+    // Two reasons: (1) it lets the sessionStorage/reduced-motion checks
+    // above skip the animation entirely rather than racing to remove
+    // the element mid-animation, and (2) on client-side navigations
+    // (Astro's View Transitions router), a fresh #preloader element
+    // mounts on every route change - without this gate it would replay
+    // the intro animation on every internal link click, not just the
+    // first visit.
+    el.classList.add("run");
+  }
+
+  runPreloader();
+</script>

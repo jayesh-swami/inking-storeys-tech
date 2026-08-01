@@ -1,0 +1,146 @@
+/**
+ * Global stylesheet: Tailwind v4 entry point, font loading, the
+ * "Terracotta Minimalism" design-token theme, base element styles, and
+ * a handful of small hand-written CSS rules for things Tailwind
+ * utility classes alone can't express cleanly (the scroll-reveal
+ * transition, the scroll-linked header background, and its
+ * "transparent while the mobile menu is open" override).
+ *
+ * Tailwind v4 has no tailwind.config.js in this project - all theme
+ * customization happens in the `@theme` block below, and component-ish
+ * one-off rules live in `@layer components` at the bottom.
+ */
+@import "tailwindcss";
+
+/* Headings — editorial luxury serif */
+@import "@fontsource/cormorant-garamond/400.css";
+@import "@fontsource/cormorant-garamond/500.css";
+@import "@fontsource/cormorant-garamond/600.css";
+@import "@fontsource/cormorant-garamond/300-italic.css";
+
+/* Subheadings — geometric architectural sans */
+@import "@fontsource/montserrat/400.css";
+@import "@fontsource/montserrat/500.css";
+@import "@fontsource/montserrat/600.css";
+@import "@fontsource/montserrat/700.css";
+
+/* Body — neutral, ultra-readable */
+@import "@fontsource/dm-sans/400.css";
+@import "@fontsource/dm-sans/500.css";
+
+/**
+ * Tailwind v4 theme tokens. Anything defined here becomes both a CSS
+ * custom property (--color-terracotta etc, usable directly in plain
+ * CSS) and a set of generated utility classes (bg-terracotta,
+ * text-terracotta, border-terracotta, ...). This is the single source
+ * of truth for the design system's palette and type stack - change a
+ * value here rather than hunting down individual utility classes.
+ */
+@theme {
+  /* Terracotta Minimalism palette */
+  --color-alabaster: #faf9f6; /* warm off-white - page background */
+  --color-terracotta: #c84b31; /* primary accent - eyebrows, links, active states */
+  --color-terracotta-light: #e2725b; /* accent on dark backgrounds (better contrast on charcoal) */
+  --color-charcoal: #2c3531; /* near-black - body text, dark section backgrounds (footer, menu overlay) */
+  --color-sand: #efece6; /* muted warm gray - secondary section backgrounds */
+  --color-taupe: #8c857b; /* muted neutral - de-emphasized text (dates, labels) */
+
+  --font-serif: "Cormorant Garamond", serif; /* headings - editorial/luxury feel */
+  --font-sans: "Montserrat", sans-serif; /* nav links, eyebrows, uppercase labels (paired with .font-nav below for letter-spacing) */
+  --font-body: "DM Sans", sans-serif; /* paragraph text - default on <body> */
+}
+
+@layer base {
+  html {
+    background-color: var(--color-alabaster);
+    color: var(--color-charcoal);
+  }
+
+  body {
+    font-family: var(--font-body);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-serif);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+
+  .font-nav {
+    font-family: var(--font-sans);
+    letter-spacing: 0.08em;
+  }
+
+  ::selection {
+    background-color: var(--color-terracotta);
+    color: var(--color-alabaster);
+  }
+}
+
+@layer utilities {
+  /* Opts an element (and its descendants) out of the custom wheel-scroll
+     smoothing in src/scripts/motion.ts, so it scrolls with normal native
+     behaviour instead - used on the mobile curtain menu overlay, in case
+     its content ever exceeds the viewport height. `overscroll-behavior:
+     contain` additionally stops scrolling inside it from "leaking" into
+     a scroll of the page behind it once it hits its own scroll limits. */
+  [data-native-scroll] {
+    overscroll-behavior: contain;
+  }
+
+  /* Paired with the IntersectionObserver in src/scripts/motion.ts
+     (initReveals): elements start hidden/offset and fade+slide up the
+     first time they scroll into view, then stay revealed. If JS never
+     runs, hidden-by-default is an acceptable trade-off here (unlike the
+     preloader) because the rest of the site's core navigation already
+     requires JS to function at all. */
+  [data-reveal] {
+    opacity: 0;
+    transform: translateY(20px);
+    transition:
+      opacity 0.6s ease,
+      transform 0.6s ease;
+  }
+
+  [data-reveal].is-revealed {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Respect the OS-level motion preference: skip the hidden/offset
+     starting state entirely rather than animating into place. */
+  @media (prefers-reduced-motion: reduce) {
+    [data-reveal] {
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
+  }
+}
+
+@layer components {
+  /* The fixed site header's background. Deliberately always-on (not
+     conditional on scroll position) so the wordmark/nav stay legible
+     against whatever page content is currently behind the fixed header,
+     including the very top of the page over the hero image. */
+  #site-header {
+    background-color: color-mix(in oklab, var(--color-alabaster) 90%, transparent);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid color-mix(in oklab, var(--color-charcoal) 8%, transparent);
+  }
+
+  /* The curtain overlay already supplies a full-bleed dark backdrop, so the
+     header's light background would clash with it while open. `:has()` lets
+     this react to the menu button's aria-expanded state with no JS
+     involvement beyond what Nav.astro already does to toggle that attribute. */
+  #site-header:has(#menu-toggle[aria-expanded="true"]) {
+    background-color: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border-bottom-color: transparent;
+  }
+}

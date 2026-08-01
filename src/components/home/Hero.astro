@@ -1,0 +1,112 @@
+---
+/**
+ * Full-screen hero image carousel. Driven by the generic controller in
+ * src/scripts/carousel.ts (`data-carousel*` attributes below) and the
+ * parallax effect in src/scripts/motion.ts (`data-parallax-speed`).
+ *
+ * Slide media loading is intentionally asymmetric: slide 0 gets a real
+ * `src` (loads immediately, `fetchpriority="high"`, since it's what
+ * every visitor sees first), while slides 1+ only get a `data-src` -
+ * no `src` at all - so the browser never requests their images. The
+ * carousel controller promotes `data-src` to `src` one slide ahead of
+ * whichever is currently active, so a visitor who bounces before the
+ * carousel ever advances never pays for images they never saw. (Using
+ * Astro's `loading="lazy"` alone doesn't achieve this: all three
+ * slides are stacked in the same viewport-sized area via CSS, just
+ * with opacity toggled, so the browser's lazy-loading heuristic - which
+ * is geometry-based, not opacity-based - would still fetch all three
+ * immediately regardless of the `loading` attribute.)
+ */
+import { getImage } from "astro:assets";
+import { ChevronLeft, ChevronRight } from "@lucide/astro";
+
+const slidesData = [
+  {
+    image: "https://images.unsplash.com/photo-1613490493576-7fde63acd811",
+    eyebrow: "Architecture — Jaipur",
+    heading: "Spaces shaped by\nsite, light, and silence.",
+  },
+  {
+    image: "https://images.unsplash.com/photo-1600210491892-03d54c0aaf87",
+    eyebrow: "Interiors — Mumbai",
+    heading: "Material honesty,\nquietly detailed.",
+  },
+  {
+    image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c",
+    eyebrow: "Architecture — Goa",
+    heading: "Built to weather\na hundred monsoons.",
+  },
+];
+
+// Uses getImage() rather than the <Image> component so we get back a
+// plain { src, attributes } object we can conditionally render as
+// either `src=` (slide 0, loads now) or `data-src=` (other slides,
+// loads later) below - <Image> always renders a real `src`, which
+// would defeat the deferred-loading approach described above.
+const slides = await Promise.all(
+  slidesData.map(async (slide) => {
+    const optimized = await getImage({
+      src: slide.image,
+      width: 1920,
+      height: 1200,
+      quality: 68,
+      format: "webp",
+    });
+    return { ...slide, image: optimized };
+  }),
+);
+---
+
+<section class="relative h-screen w-full overflow-hidden bg-charcoal" data-carousel data-carousel-autoplay="6000">
+  {slides.map((slide, i) => (
+    <div
+      data-carousel-slide
+      class:list={["absolute inset-0 transition-opacity duration-1000 ease-out", i === 0 ? "opacity-100" : "opacity-0 pointer-events-none"]}
+    >
+      <div class="absolute inset-0 -m-32 overflow-hidden">
+        {i === 0 ? (
+          <img
+            src={slide.image.src}
+            alt=""
+            width={slide.image.attributes.width}
+            height={slide.image.attributes.height}
+            class="h-full w-full object-cover will-change-transform"
+            data-parallax-speed="0.75"
+            loading="eager"
+            fetchpriority="high"
+          />
+        ) : (
+          <img
+            data-src={slide.image.src}
+            alt=""
+            width={slide.image.attributes.width}
+            height={slide.image.attributes.height}
+            class="h-full w-full object-cover will-change-transform"
+            data-parallax-speed="0.75"
+            loading="lazy"
+            fetchpriority="low"
+          />
+        )}
+      </div>
+      <div class="absolute inset-0 bg-charcoal/35"></div>
+      <div class="relative flex h-full flex-col justify-end px-6 pb-28 md:px-10 md:pb-32">
+        <p class="font-nav mb-4 text-xs uppercase tracking-[0.3em] text-alabaster/70">{slide.eyebrow}</p>
+        <h1 class="max-w-3xl whitespace-pre-line font-serif text-5xl leading-[1.05] text-alabaster md:text-7xl">
+          {slide.heading}
+        </h1>
+      </div>
+    </div>
+  ))}
+
+  <div class="absolute inset-x-6 bottom-8 z-10 flex items-center justify-between md:inset-x-10">
+    <div class="flex items-center gap-1.5 text-alabaster" data-carousel-dots></div>
+    <div class="flex items-center gap-3 text-alabaster">
+      <button type="button" data-carousel-prev aria-label="Previous slide" class="rounded-full border border-alabaster/30 p-2 transition-colors hover:border-terracotta-light hover:text-terracotta-light">
+        <ChevronLeft class="h-4 w-4" />
+      </button>
+      <button type="button" data-carousel-next aria-label="Next slide" class="rounded-full border border-alabaster/30 p-2 transition-colors hover:border-terracotta-light hover:text-terracotta-light">
+        <ChevronRight class="h-4 w-4" />
+      </button>
+    </div>
+  </div>
+</section>

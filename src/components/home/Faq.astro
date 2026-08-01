@@ -1,0 +1,33 @@
+---
+import { getCollection, render } from "astro:content";
+import SectionHeading from "../SectionHeading.astro";
+
+const entries = await getCollection("faqs");
+const faqs = await Promise.all(
+  entries
+    .sort((a, b) => a.data.order - b.data.order)
+    .map(async (entry) => ({ ...entry, rendered: await render(entry) })),
+);
+---
+
+<section class="px-6 py-24 md:px-10 md:py-32">
+  <div class="mx-auto max-w-3xl">
+    <SectionHeading eyebrow="FAQ" heading="Common Questions" class="mb-14 text-center" />
+
+    <div class="divide-y divide-charcoal/10 border-y border-charcoal/10">
+      {faqs.map((faq) => (
+        <details class="group py-6">
+          <summary class="flex cursor-pointer list-none items-center justify-between gap-6">
+            <span class="font-serif text-xl md:text-2xl">{faq.data.question}</span>
+            <span class="font-nav shrink-0 text-xl text-terracotta transition-transform duration-300 group-open:rotate-45">
+              +
+            </span>
+          </summary>
+          <div class="font-body mt-4 max-w-2xl text-sm leading-relaxed text-charcoal/65 [&_p]:m-0">
+            <faq.rendered.Content />
+          </div>
+        </details>
+      ))}
+    </div>
+  </div>
+</section>

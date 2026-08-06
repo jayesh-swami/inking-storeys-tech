@@ -31,15 +31,27 @@ const desktopLinks = links.filter((link) => link.label !== "Home");
   id="site-header"
   class="fixed inset-x-0 top-0 z-50 flex items-center justify-between px-6 py-3 md:px-10 md:py-4"
 >
-  <a href="/" class="font-serif text-lg tracking-tight text-charcoal md:text-xl">
-    Inking Storeys
+  <!-- `#nav-icon` isn't used by anything in this file - Preloader.astro
+       reads its rendered position/size to fly its own icon here at the
+       end of its intro animation, so it reads as the splash logo
+       relocating into the navbar rather than two separate things
+       swapping. It flies in the regular-weight `icon.svg` though (same
+       one Preloader/Footer use) - `icon-nav.svg` here is a dedicated
+       bolder copy (`feMorphology` dilate, same technique as the
+       "inking" weight change earlier, radius tuned the opposite
+       direction), made because this request was scoped to the navbar
+       specifically. That means there's a brief weight "pop" right when
+       the flown-in icon is swapped for this heavier one as the
+       preloader is removed - not fixed since it wasn't asked for. -->
+  <a href="/" class="flex items-center gap-3">
+    <img id="nav-icon" src="/icon-nav.svg" alt="Inking Storeys" class="h-11 w-auto md:h-14" />
   </a>
 
   <nav class="hidden items-center gap-8 lg:flex xl:gap-10">
     {desktopLinks.map((link) => (
       <a
         href={link.href}
-        class="font-nav text-xs uppercase tracking-widest text-charcoal transition-colors hover:text-terracotta"
+        class="font-nav text-xs uppercase tracking-widest text-alabaster transition-colors hover:text-white"
       >
         {link.label}
       </a>
@@ -47,14 +59,12 @@ const desktopLinks = links.filter((link) => link.label !== "Home");
   </nav>
 
   <!--
-    Icon-only hamburger, visible only below `lg`. All of its visual
-    states are driven by the `aria-expanded` attribute the script below
-    toggles, via Tailwind's `aria-*`/`group-aria-*` variants - no
-    separate JS-managed CSS classes for open/closed needed:
-      - the three bars morph into an "X" (rotate + fade the middle bar)
-      - the icon's own color flips from charcoal to alabaster, so it
-        stays visible against the dark curtain overlay once open
-        (rather than the dark-on-dark bug this button used to have)
+    Icon-only hamburger, visible only below `lg`. Stays alabaster in both
+    states since the header and the curtain overlay it opens are both
+    terracotta now - only the bars' shape needs to change on open, driven by
+    the `aria-expanded` attribute the script below toggles via Tailwind's
+    `group-aria-expanded` variant (the three bars morph into an "X": rotate
+    + fade the middle bar), no separate JS-managed CSS classes needed.
   -->
   <button
     id="menu-toggle"
@@ -62,7 +72,7 @@ const desktopLinks = links.filter((link) => link.label !== "Home");
     aria-expanded="false"
     aria-controls="menu-overlay"
     aria-label="Open menu"
-    class="group relative flex h-7 w-7 items-center justify-center text-charcoal aria-expanded:text-alabaster lg:hidden"
+    class="group relative flex h-7 w-7 items-center justify-center text-alabaster lg:hidden"
   >
     <span class="flex w-5 flex-col gap-[4px]">
       <span class="h-px w-full bg-current transition-transform duration-300 group-aria-expanded:translate-y-[5px] group-aria-expanded:rotate-45"></span>
@@ -74,7 +84,7 @@ const desktopLinks = links.filter((link) => link.label !== "Home");
 
 <div
   id="menu-overlay"
-  class="fixed inset-0 z-40 flex translate-y-[-100%] flex-col justify-between bg-charcoal px-6 py-24 text-alabaster transition-transform duration-700 ease-[cubic-bezier(0.76,0,0.24,1)] md:px-16 md:py-28 lg:hidden"
+  class="fixed inset-0 z-40 flex translate-y-[-100%] flex-col justify-between bg-terracotta px-6 py-24 text-alabaster transition-transform duration-700 ease-[cubic-bezier(0.76,0,0.24,1)] md:px-16 md:py-28 lg:hidden"
   data-native-scroll
   role="dialog"
   aria-modal="true"
@@ -85,7 +95,7 @@ const desktopLinks = links.filter((link) => link.label !== "Home");
     {links.map((link, i) => (
       <a
         href={link.href}
-        class="group flex items-baseline gap-4 border-b border-alabaster/10 py-3 font-serif text-4xl transition-colors hover:text-terracotta-light md:text-6xl"
+        class="group flex items-baseline gap-4 border-b border-alabaster/10 py-3 font-serif text-4xl transition-colors hover:text-white md:text-6xl"
       >
         <span class="font-nav text-xs text-taupe">0{i + 1}</span>
         {link.label}
@@ -101,7 +111,7 @@ const desktopLinks = links.filter((link) => link.label !== "Home");
     </div>
     <div class="flex flex-col gap-1">
       <p class="text-alabaster/60">Get in touch</p>
-      <a href="mailto:studio@inkingstoreys.com" class="hover:text-terracotta-light">studio@inkingstoreys.com</a>
+      <a href="mailto:studio@inkingstoreys.com" class="hover:text-white">studio@inkingstoreys.com</a>
     </div>
     <SocialLinks class="gap-4" />
   </div>

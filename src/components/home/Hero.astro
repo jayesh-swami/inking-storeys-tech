@@ -57,7 +57,7 @@ const slides = await Promise.all(
 );
 ---
 
-<section class="relative h-screen w-full overflow-hidden bg-charcoal" data-carousel data-carousel-autoplay="6000">
+<section class="relative h-screen w-full overflow-hidden bg-terracotta" data-carousel data-carousel-autoplay="6000">
   {slides.map((slide, i) => (
     <div
       data-carousel-slide
@@ -88,7 +88,7 @@ const slides = await Promise.all(
           />
         )}
       </div>
-      <div class="absolute inset-0 bg-charcoal/35"></div>
+      <div class="absolute inset-0 bg-terracotta/35"></div>
       <div class="relative flex h-full flex-col justify-end px-6 pb-28 md:px-10 md:pb-32">
         <p class="font-nav mb-4 text-xs uppercase tracking-[0.3em] text-alabaster/70">{slide.eyebrow}</p>
         <h1 class="max-w-3xl whitespace-pre-line font-serif text-5xl leading-[1.05] text-alabaster md:text-7xl">
@@ -101,10 +101,10 @@ const slides = await Promise.all(
   <div class="absolute inset-x-6 bottom-8 z-10 flex items-center justify-between md:inset-x-10">
     <div class="flex items-center gap-1.5 text-alabaster" data-carousel-dots></div>
     <div class="flex items-center gap-3 text-alabaster">
-      <button type="button" data-carousel-prev aria-label="Previous slide" class="rounded-full border border-alabaster/30 p-2 transition-colors hover:border-terracotta-light hover:text-terracotta-light">
+      <button type="button" data-carousel-prev aria-label="Previous slide" class="rounded-full border border-alabaster/30 p-2 transition-colors hover:border-white hover:text-white">
         <ChevronLeft class="h-4 w-4" />
       </button>
-      <button type="button" data-carousel-next aria-label="Next slide" class="rounded-full border border-alabaster/30 p-2 transition-colors hover:border-terracotta-light hover:text-terracotta-light">
+      <button type="button" data-carousel-next aria-label="Next slide" class="rounded-full border border-alabaster/30 p-2 transition-colors hover:border-white hover:text-white">
         <ChevronRight class="h-4 w-4" />
       </button>
     </div>

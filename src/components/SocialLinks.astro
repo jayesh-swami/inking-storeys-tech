@@ -28,7 +28,7 @@ const { class: className } = Astro.props;
 
 <div class:list={["flex", className]}>
   {socials.map(({ label, href, icon: Icon }) => (
-    <a href={href} aria-label={label} class="hover:text-terracotta-light">
+    <a href={href} aria-label={label} class="hover:text-white">
       <Icon class="h-4 w-4" />
     </a>
   ))}

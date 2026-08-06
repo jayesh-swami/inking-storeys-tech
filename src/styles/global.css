@@ -125,18 +125,21 @@
   /* The fixed site header's background. Deliberately always-on (not
      conditional on scroll position) so the wordmark/nav stay legible
      against whatever page content is currently behind the fixed header,
-     including the very top of the page over the hero image. */
+     including the very top of the page over the hero image. Terracotta
+     (matching the footer/curtain menu) rather than alabaster, so the
+     header reads as the same bold surface used elsewhere on the site. */
   #site-header {
-    background-color: color-mix(in oklab, var(--color-alabaster) 90%, transparent);
+    background-color: color-mix(in oklab, var(--color-terracotta) 90%, transparent);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border-bottom: 1px solid color-mix(in oklab, var(--color-charcoal) 8%, transparent);
+    border-bottom: 1px solid color-mix(in oklab, var(--color-alabaster) 8%, transparent);
   }
 
-  /* The curtain overlay already supplies a full-bleed dark backdrop, so the
-     header's light background would clash with it while open. `:has()` lets
-     this react to the menu button's aria-expanded state with no JS
-     involvement beyond what Nav.astro already does to toggle that attribute. */
+  /* The curtain overlay already supplies its own full-bleed charcoal
+     backdrop, so the header's blur/border would just sit on top of it as a
+     visible seam while open. `:has()` lets this react to the menu button's
+     aria-expanded state with no JS involvement beyond what Nav.astro
+     already does to toggle that attribute. */
   #site-header:has(#menu-toggle[aria-expanded="true"]) {
     background-color: transparent;
     backdrop-filter: none;

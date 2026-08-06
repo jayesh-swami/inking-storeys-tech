@@ -18,11 +18,8 @@ interface Props {
   description?: string;
   /**
    * Absolute or root-relative path to a page-specific social-share
-   * image (ideally 1200x630). When omitted, og:image/twitter:image are
-   * left out entirely rather than pointing at a placeholder - there's
-   * no site-wide default social image in `public/` yet. Add one (e.g.
-   * `public/og-default.jpg`) and default this prop to it once it
-   * exists.
+   * image (ideally 1200x630). Defaults to the site-wide share image at
+   * `public/og-default.png`.
    */
   image?: string;
 }
@@ -30,7 +27,7 @@ interface Props {
 const {
   title,
   description = "Inking Storeys — architecture and interior design atelier crafting quiet, material-led spaces across India.",
-  image,
+  image = "/og-default.png",
 } = Astro.props;
 
 const pageTitle = `${title} · Inking Storeys`;
@@ -46,7 +43,9 @@ const ogImageURL = image ? new URL(image, Astro.site) : undefined;
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="canonical" href={canonicalURL} />
     <meta name="description" content={description} />
     <title>{pageTitle}</title>

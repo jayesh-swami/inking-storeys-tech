@@ -7,9 +7,9 @@ const testimonials = (await getCollection("testimonials")).sort(
 );
 ---
 
-<section class="bg-charcoal px-6 py-24 text-alabaster md:px-10 md:py-32">
+<section class="bg-terracotta px-6 py-24 text-alabaster md:px-10 md:py-32">
   <div class="mx-auto max-w-4xl text-center" data-carousel data-carousel-autoplay="7000">
-    <Quote class="mx-auto mb-8 h-8 w-8 text-terracotta-light" data-reveal />
+    <Quote class="mx-auto mb-8 h-8 w-8 text-white" data-reveal />
 
     <div class="relative">
       {testimonials.map((t, i) => (
@@ -29,11 +29,11 @@ const testimonials = (await getCollection("testimonials")).sort(
     </div>
 
     <div class="mt-12 flex items-center justify-center gap-4">
-      <button type="button" data-carousel-prev aria-label="Previous testimonial" class="rounded-full border border-alabaster/25 p-2 transition-colors hover:border-terracotta-light hover:text-terracotta-light">
+      <button type="button" data-carousel-prev aria-label="Previous testimonial" class="rounded-full border border-alabaster/25 p-2 transition-colors hover:border-white hover:text-white">
         <ChevronLeft class="h-4 w-4" />
       </button>
       <div class="flex items-center gap-1.5" data-carousel-dots></div>
-      <button type="button" data-carousel-next aria-label="Next testimonial" class="rounded-full border border-alabaster/25 p-2 transition-colors hover:border-terracotta-light hover:text-terracotta-light">
+      <button type="button" data-carousel-next aria-label="Next testimonial" class="rounded-full border border-alabaster/25 p-2 transition-colors hover:border-white hover:text-white">
         <ChevronRight class="h-4 w-4" />
       </button>
     </div>

@@ -17,17 +17,20 @@ const offices = [
 ];
 ---
 
-<footer class="bg-charcoal px-6 pt-20 pb-8 text-alabaster md:px-10 md:pt-28">
+<footer class="bg-terracotta px-6 pt-20 pb-8 text-alabaster md:px-10 md:pt-28">
   <div class="mx-auto grid max-w-7xl gap-14 border-b border-alabaster/10 pb-16 md:grid-cols-12 md:gap-8">
     <div class="md:col-span-5">
-      <p class="font-serif text-3xl md:text-4xl">Inking Storeys</p>
+      <div class="flex items-center gap-4">
+        <img src="/icon.svg" alt="" class="h-20 w-auto md:h-24" />
+        <img src="/wordmark-animated.svg" alt="Inking Storeys" class="h-20 w-auto md:h-24" />
+      </div>
       <p class="font-body mt-5 max-w-sm text-sm leading-relaxed text-alabaster/60">
         An architecture and interior design atelier crafting quiet, material-led
         spaces across India — from first sketch to final handover.
       </p>
       <a
         href="/contact"
-        class="font-nav mt-8 inline-flex items-center gap-2 border-b border-terracotta-light pb-1 text-xs uppercase tracking-widest text-terracotta-light"
+        class="font-nav mt-8 inline-flex items-center gap-2 border-b border-white pb-1 text-xs uppercase tracking-widest text-white"
       >
         Start a project <ArrowUpRight class="h-4 w-4" />
       </a>
@@ -38,7 +41,7 @@ const offices = [
       <ul class="mt-5 flex flex-col gap-3">
         {quickLinks.map((link) => (
           <li>
-            <a href={link.href} class="font-body text-sm text-alabaster/80 transition-colors hover:text-terracotta-light">
+            <a href={link.href} class="font-body text-sm text-alabaster/80 transition-colors hover:text-white">
               {link.label}
             </a>
           </li>

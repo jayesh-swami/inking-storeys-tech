@@ -39,11 +39,35 @@
 @theme {
   /* Terracotta Minimalism palette */
   --color-alabaster: #faf9f6; /* warm off-white - page background */
-  --color-terracotta: #c84b31; /* primary accent - eyebrows, links, active states */
+  --color-terracotta: #a36a56; /* primary accent - eyebrows, links, active states */
   --color-terracotta-light: #e2725b; /* accent on dark backgrounds (better contrast on charcoal) */
   --color-charcoal: #2c3531; /* near-black - body text, dark section backgrounds (footer, menu overlay) */
   --color-sand: #efece6; /* muted warm gray - secondary section backgrounds */
   --color-taupe: #8c857b; /* muted neutral - de-emphasized text (dates, labels) */
+
+  /* Full tonal scale derived from --color-terracotta (= this scale's
+     500, unchanged), for whenever a lighter/darker variant is needed
+     instead of the base or the ad-hoc `-light` swatch above. Computed
+     offline in Oklab (mixing the base toward white for 50-400, toward
+     black for 600-950, at fixed ratios) rather than picked by eye - an
+     earlier version of this scale used fixed target-lightness stops
+     instead of fixed mix ratios, which happened to land 500 and 600
+     almost on top of each other for this particular base color (both
+     landed near L=0.58); mix ratios scale relative to whatever the
+     base's own lightness is, so that collision can't happen regardless
+     of which base color this ever gets regenerated from again. See
+     `#site-header` below for the first real use (600, for a solid,
+     non-translucent header). */
+  --color-terracotta-50: #f8f3f1;
+  --color-terracotta-100: #f1e6e2;
+  --color-terracotta-200: #e4d1ca;
+  --color-terracotta-300: #d6b9ae;
+  --color-terracotta-400: #c09586;
+  --color-terracotta-600: #825444;
+  --color-terracotta-700: #5f3c30;
+  --color-terracotta-800: #3c241c;
+  --color-terracotta-900: #1e100b;
+  --color-terracotta-950: #0a0402;
 
   --font-serif: "Cormorant Garamond", serif; /* headings - editorial/luxury feel */
   --font-sans: "Montserrat", sans-serif; /* nav links, eyebrows, uppercase labels (paired with .font-nav below for letter-spacing) */
@@ -127,23 +151,22 @@
      against whatever page content is currently behind the fixed header,
      including the very top of the page over the hero image. Terracotta
      (matching the footer/curtain menu) rather than alabaster, so the
-     header reads as the same bold surface used elsewhere on the site. */
+     header reads as the same bold surface used elsewhere on the site.
+     --color-terracotta-600 (see the tonal scale above), not the base
+     terracotta - a deliberately darker bar. Slight transparency (92%)
+     rather than fully opaque, per request. */
   #site-header {
-    background-color: color-mix(in oklab, var(--color-terracotta) 90%, transparent);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    background-color: color-mix(in oklab, var(--color-terracotta-600) 92%, transparent);
     border-bottom: 1px solid color-mix(in oklab, var(--color-alabaster) 8%, transparent);
   }
 
   /* The curtain overlay already supplies its own full-bleed charcoal
-     backdrop, so the header's blur/border would just sit on top of it as a
+     backdrop, so the header's border would just sit on top of it as a
      visible seam while open. `:has()` lets this react to the menu button's
      aria-expanded state with no JS involvement beyond what Nav.astro
      already does to toggle that attribute. */
   #site-header:has(#menu-toggle[aria-expanded="true"]) {
     background-color: transparent;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
     border-bottom-color: transparent;
   }
 }

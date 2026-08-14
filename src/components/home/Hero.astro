@@ -19,22 +19,28 @@
  */
 import { getImage } from "astro:assets";
 import { ChevronLeft, ChevronRight } from "@lucide/astro";
+import chechaniDusk from "../../content/projects/chechanis-residence/exterior-dusk.jpg";
+import chechaniGoldenHour from "../../content/projects/chechanis-residence/exterior-golden-hour.jpg";
+import chechaniFacade from "../../content/projects/chechanis-residence/facade-detail.jpg";
 
+// Only real project imagery (Chechani's Residence) - the previous
+// Unsplash placeholder slides for fictional projects are gone, per
+// request, now that there's a real project to show instead.
 const slidesData = [
   {
-    image: "https://images.unsplash.com/photo-1613490493576-7fde63acd811",
+    image: chechaniDusk,
     eyebrow: "Architecture — Jaipur",
-    heading: "Spaces shaped by\nsite, light, and silence.",
+    heading: "Two materials,\none composition.",
   },
   {
-    image: "https://images.unsplash.com/photo-1600210491892-03d54c0aaf87",
-    eyebrow: "Interiors — Mumbai",
-    heading: "Material honesty,\nquietly detailed.",
+    image: chechaniGoldenHour,
+    eyebrow: "Architecture — Jaipur",
+    heading: "Balconies that\ncatch the light.",
   },
   {
-    image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c",
-    eyebrow: "Architecture — Goa",
-    heading: "Built to weather\na hundred monsoons.",
+    image: chechaniFacade,
+    eyebrow: "Architecture — Jaipur",
+    heading: "A rooftop garden\nabove the street.",
   },
 ];
 
@@ -48,7 +54,7 @@ const slides = await Promise.all(
     const optimized = await getImage({
       src: slide.image,
       width: 1920,
-      height: 1200,
+      height: 1350,
       quality: 68,
       format: "webp",
     });
@@ -63,15 +69,15 @@ const slides = await Promise.all(
       data-carousel-slide
       class:list={["absolute inset-0 transition-opacity duration-1000 ease-out", i === 0 ? "opacity-100" : "opacity-0 pointer-events-none"]}
     >
-      <div class="absolute inset-0 -m-32 overflow-hidden">
+      <div class="absolute inset-0 -m-16 overflow-hidden">
         {i === 0 ? (
           <img
             src={slide.image.src}
             alt=""
             width={slide.image.attributes.width}
             height={slide.image.attributes.height}
-            class="h-full w-full object-cover will-change-transform"
-            data-parallax-speed="0.75"
+            class="h-full w-full object-cover object-[center_35%] will-change-transform"
+            data-parallax-speed="0.4"
             loading="eager"
             fetchpriority="high"
           />
@@ -81,14 +87,14 @@ const slides = await Promise.all(
             alt=""
             width={slide.image.attributes.width}
             height={slide.image.attributes.height}
-            class="h-full w-full object-cover will-change-transform"
-            data-parallax-speed="0.75"
+            class="h-full w-full object-cover object-[center_35%] will-change-transform"
+            data-parallax-speed="0.4"
             loading="lazy"
             fetchpriority="low"
           />
         )}
       </div>
-      <div class="absolute inset-0 bg-terracotta/35"></div>
+      <div class="absolute inset-0 bg-black/35"></div>
       <div class="relative flex h-full flex-col justify-end px-6 pb-28 md:px-10 md:pb-32">
         <p class="font-nav mb-4 text-xs uppercase tracking-[0.3em] text-alabaster/70">{slide.eyebrow}</p>
         <h1 class="max-w-3xl whitespace-pre-line font-serif text-5xl leading-[1.05] text-alabaster md:text-7xl">

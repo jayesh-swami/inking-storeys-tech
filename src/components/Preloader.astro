@@ -48,13 +48,47 @@
  * one already used in Nav.astro) rather than anything from the
  * Illustrator file - the icon in that file turned out to be an
  * embedded raster scan, not vector art, so there was nothing to trace
- * a stroke through. `/icon.svg` works for this anyway because, unlike
- * the flattened wordmark, it was already effectively drawn as one
- * continuous line (a ring, then the "S" body) rather than a filled
- * silhouette - the two subpaths in that one <path> draw in that order
- * simply because stroke-dasharray/dashoffset reveals a path in DOM
- * order, no splitting needed.
+ * a stroke through. That source path has two subpaths - a small ring
+ * (#icon-ring, scales open from a dot) and a closed "S" swirl "body".
+ *
+ * The body path itself is NOT a thin centerline, though - it's the
+ * full outline of an already-thick filled ribbon (traces one edge all
+ * the way around, then back along the other edge, to close the loop),
+ * which made it a bad candidate for a dash-drawn "pen line" animation:
+ * stroking that outline directly just traces a faint hairline around
+ * both edges, and revealing arbitrary arc-length windows of it (an
+ * earlier version of this file did exactly that) draws two DIFFERENT,
+ * both-plausible-looking parts of the outline rather than two distinct
+ * strokes with a clean start/meeting point - there's no such point on
+ * a closed ribbon-outline loop; the split has to be chosen relative to
+ * the ribbon's actual CENTERLINE, not its outline.
+ *
+ * That centerline (#icon-body-hook/-outer below) was extracted
+ * offline, not hand-traced: densely sampled the outline into ~3000
+ * boundary points, built a Voronoi diagram of them, kept only the
+ * interior vertices/edges (an approximation of the medial axis), then
+ * found the graph's diameter (the two mutually-farthest vertices via
+ * two Dijkstra passes) - for a ribbon that's a stroke-expanded single
+ * open curve with no branches, this reliably finds its two true
+ * endpoints and the shortest path between them is the centerline
+ * itself (verified: endpoint-to-endpoint distance came out to within
+ * 6 units of exactly half the outline's total length, which is exactly
+ * what a constant-width ribbon's centerline should measure). Split at
+ * its most-visually-bottom point (which landed at 52% of the
+ * centerline's arc length - close to the middle, unlike the outline's
+ * own 17/83 split, because the centerline doesn't have the outline's
+ * end-cap-driven asymmetry) into #icon-body-hook (the shorter piece,
+ * starting at the small hook near the ring) and #icon-body-outer (the
+ * longer piece, starting at the top-line's tip), each simplified and
+ * refit as a smooth Catmull-Rom-to-bezier curve. Both draw on as thin
+ * strokes from their own natural starting point down to that shared
+ * bottom point, then #icon-body-fill (the original thick ribbon
+ * outline, filled rather than stroked) fades in on top once both
+ * finish - see the <style> block for the actual keyframes/formulas.
  */
+import * as glyphs from "./preloader/glyphs";
+import * as iconPaths from "./preloader/icon-paths";
+import * as inkingStrokes from "./preloader/inking-strokes";
 ---
 
 <div id="preloader" class="fixed inset-0 z-[100] flex items-center justify-center">
@@ -76,22 +110,22 @@
   >
     <defs>
       <g id="glyph-0-0">
-        <path d="M 5.375 -10.28125 L 4.53125 -9.265625 C 4.21875 -10.359375 3.742188 -10.90625 3.109375 -10.90625 C 2.734375 -10.90625 2.410156 -10.75 2.140625 -10.4375 C 1.867188 -10.132812 1.734375 -9.679688 1.734375 -9.078125 C 1.734375 -8.546875 1.832031 -8.140625 2.03125 -7.859375 C 2.238281 -7.585938 2.570312 -7.351562 3.03125 -7.15625 L 3.984375 -6.75 C 4.453125 -6.539062 4.835938 -6.140625 5.140625 -5.546875 C 5.441406 -4.960938 5.59375 -4.253906 5.59375 -3.421875 C 5.59375 -2.179688 5.34375 -1.25 4.84375 -0.625 C 4.34375 0 3.734375 0.3125 3.015625 0.3125 C 1.890625 0.3125 1.039062 -0.472656 0.46875 -2.046875 L 1.28125 -3.0625 C 1.695312 -1.851562 2.273438 -1.25 3.015625 -1.25 C 3.441406 -1.25 3.804688 -1.421875 4.109375 -1.765625 C 4.421875 -2.109375 4.578125 -2.609375 4.578125 -3.265625 C 4.578125 -3.816406 4.46875 -4.234375 4.25 -4.515625 C 4.03125 -4.796875 3.71875 -5.03125 3.3125 -5.21875 L 2.40625 -5.609375 C 1.269531 -6.128906 0.703125 -7.191406 0.703125 -8.796875 C 0.703125 -9.992188 0.941406 -10.898438 1.421875 -11.515625 C 1.898438 -12.140625 2.476562 -12.453125 3.15625 -12.453125 C 4.25 -12.453125 4.988281 -11.726562 5.375 -10.28125 Z M 5.375 -10.28125 "/>
+        <path d={glyphs.s}/>
       </g>
       <g id="glyph-0-1">
-        <path d="M 4.453125 -12.140625 L 4.453125 -10.59375 L 2.53125 -10.59375 L 2.53125 -3.421875 C 2.53125 -2.578125 2.609375 -2.003906 2.765625 -1.703125 C 2.929688 -1.398438 3.175781 -1.25 3.5 -1.25 C 3.832031 -1.25 4.15625 -1.40625 4.46875 -1.71875 L 4.5 -0.125 C 4.15625 0.164062 3.738281 0.3125 3.25 0.3125 C 2.800781 0.3125 2.410156 0.0703125 2.078125 -0.40625 C 1.753906 -0.894531 1.59375 -1.738281 1.59375 -2.9375 L 1.59375 -10.59375 L 0.203125 -10.59375 L 0.203125 -12.140625 L 1.59375 -12.140625 L 1.59375 -15.578125 L 2.53125 -15.578125 L 2.53125 -12.140625 Z M 4.453125 -12.140625 "/>
+        <path d={glyphs.t}/>
       </g>
       <g id="glyph-0-2">
-        <path d="M 6.71875 -10.640625 C 7.382812 -9.429688 7.71875 -7.910156 7.71875 -6.078125 C 7.71875 -4.242188 7.382812 -2.71875 6.71875 -1.5 C 6.0625 -0.289062 5.21875 0.3125 4.1875 0.3125 C 3.175781 0.3125 2.335938 -0.289062 1.671875 -1.5 C 1.015625 -2.71875 0.6875 -4.242188 0.6875 -6.078125 C 0.6875 -7.910156 1.015625 -9.429688 1.671875 -10.640625 C 2.335938 -11.847656 3.175781 -12.453125 4.1875 -12.453125 C 5.21875 -12.453125 6.0625 -11.847656 6.71875 -10.640625 Z M 6.015625 -2.625 C 6.472656 -3.539062 6.703125 -4.691406 6.703125 -6.078125 C 6.703125 -7.460938 6.472656 -8.613281 6.015625 -9.53125 C 5.554688 -10.445312 4.945312 -10.90625 4.1875 -10.90625 C 3.445312 -10.90625 2.847656 -10.445312 2.390625 -9.53125 C 1.929688 -8.613281 1.703125 -7.460938 1.703125 -6.078125 C 1.703125 -4.691406 1.929688 -3.539062 2.390625 -2.625 C 2.847656 -1.707031 3.445312 -1.25 4.1875 -1.25 C 4.945312 -1.25 5.554688 -1.707031 6.015625 -2.625 Z M 6.015625 -2.625 "/>
+        <path d={glyphs.o}/>
       </g>
       <g id="glyph-0-3">
-        <path d="M 1.125 0 L 1.125 -8.359375 C 1.125 -8.523438 1.101562 -9.785156 1.0625 -12.140625 L 1.984375 -12.140625 L 1.984375 -9.890625 L 2.015625 -9.890625 C 2.160156 -10.617188 2.414062 -11.226562 2.78125 -11.71875 C 3.144531 -12.207031 3.597656 -12.453125 4.140625 -12.453125 C 4.398438 -12.453125 4.628906 -12.398438 4.828125 -12.296875 L 4.640625 -10.609375 C 4.523438 -10.703125 4.347656 -10.75 4.109375 -10.75 C 3.453125 -10.75 2.945312 -10.335938 2.59375 -9.515625 C 2.238281 -8.691406 2.0625 -7.804688 2.0625 -6.859375 L 2.0625 0 Z M 1.125 0 "/>
+        <path d={glyphs.r}/>
       </g>
       <g id="glyph-0-4">
-        <path d="M 7.203125 -5.609375 L 1.671875 -5.609375 C 1.722656 -4.378906 1.976562 -3.34375 2.4375 -2.5 C 2.894531 -1.664062 3.453125 -1.25 4.109375 -1.25 C 4.566406 -1.25 4.984375 -1.453125 5.359375 -1.859375 C 5.742188 -2.265625 6.035156 -2.757812 6.234375 -3.34375 L 6.953125 -2.265625 C 6.222656 -0.546875 5.273438 0.3125 4.109375 0.3125 C 3.128906 0.3125 2.3125 -0.289062 1.65625 -1.5 C 1.007812 -2.71875 0.6875 -4.242188 0.6875 -6.078125 C 0.6875 -7.890625 1.003906 -9.40625 1.640625 -10.625 C 2.285156 -11.84375 3.082031 -12.453125 4.03125 -12.453125 C 5 -12.441406 5.769531 -11.859375 6.34375 -10.703125 C 6.914062 -9.554688 7.203125 -8.117188 7.203125 -6.390625 Z M 1.703125 -7 L 6.171875 -7 C 6.171875 -8.175781 5.976562 -9.117188 5.59375 -9.828125 C 5.207031 -10.546875 4.6875 -10.90625 4.03125 -10.90625 C 3.425781 -10.90625 2.882812 -10.503906 2.40625 -9.703125 C 1.9375 -8.910156 1.703125 -8.007812 1.703125 -7 Z M 1.703125 -7 "/>
+        <path d={glyphs.e}/>
       </g>
       <g id="glyph-0-5">
-        <path d="M 1.40625 -12.140625 L 3.484375 -2.109375 L 5.515625 -12.140625 L 6.640625 -12.140625 L 3.328125 3.171875 C 3.109375 4.191406 2.84375 4.957031 2.53125 5.46875 C 2.21875 5.976562 1.789062 6.234375 1.25 6.234375 C 0.882812 6.234375 0.59375 6.171875 0.375 6.046875 L 0.484375 4.390625 C 0.679688 4.578125 0.914062 4.671875 1.1875 4.671875 C 1.5 4.671875 1.75 4.488281 1.9375 4.125 C 2.132812 3.757812 2.3125 3.210938 2.46875 2.484375 L 2.953125 0.15625 L 0.234375 -12.140625 Z M 1.40625 -12.140625 "/>
+        <path d={glyphs.y}/>
       </g>
     </defs>
 
@@ -103,31 +137,35 @@
          (from logo-fly, see the <style> block) replaces an element's
          own transform attribute rather than combining with it - if the
          positioning were on #logo-icon, animating its CSS transform
-         would discard this placement instead of flying from it. Draws
-         first, via the same technique as the "inking" strokes below. -->
+         would discard this placement instead of flying from it.
+
+         Split into a ring and a swirl "body" (see the top-of-file
+         comment for the full story on how the body's centerline was
+         extracted). #icon-body-fill is the original thick ribbon
+         outline (filled, not stroked), invisible until the draw-on
+         finishes. #icon-body-hook and #icon-body-outer are the two
+         derived thin centerline strokes, each drawn on independently
+         from their own natural start point down to the shared bottom
+         meeting point - see icon-body-draw and the --draw-t comment
+         further down for the dash-offset math. -->
     <g id="logo-icon">
       <g transform="translate(92.5,108) scale(0.177215)">
       <g transform="translate(0.000000,699.000000) scale(0.100000,-0.100000)">
-        <path id="icon-path" d="M1905 6757 c-171 -66 -259 -172 -259 -312 0 -103 47 -183 137 -235
-94 -53 199 -50 322 12 129 64 205 169 205 283 0 199 -207 328 -405 252z m130
--51 c105 -50 165 -143 165 -257 0 -131 -71 -229 -166 -229 -160 0 -293 142
--282 301 5 72 49 164 92 190 45 27 127 25 191 -5z M1119 5855 c-287 -45 -479
--133 -627 -289 -141 -149 -239 -348 -273 -556 -14 -91 -3 -3937 12 -4060 13
--103 61 -252 106 -330 80 -136 242 -276 400 -343 142 -60 125 -59 1188 -58
-1078 2 1044 0 1204 70 116 50 199 108 302 210 136 136 224 287 276 478 l27 98
-1 615 0 615 -28 79 c-58 165 -160 258 -342 313 -56 17 -121 18 -910 19 -640 0
--865 4 -910 13 -33 7 -101 32 -151 56 -148 71 -236 180 -279 343 -13 51 -15
-160 -15 758 0 650 2 704 19 771 26 102 58 161 114 216 59 58 105 82 193 103
-56 13 169 15 754 14 740 0 751 -1 811 -53 66 -57 119 -180 105 -247 -3 -15 -2
--30 1 -33 9 -10 55 18 88 53 27 28 30 38 30 93 -1 148 -76 253 -208 292 -43
-13 -157 15 -733 15 -450 0 -701 -4 -736 -11 -142 -29 -250 -89 -361 -202 -62
--63 -87 -98 -122 -171 -72 -150 -70 -124 -70 -951 0 -732 0 -741 22 -803 46
--136 139 -239 276 -308 136 -69 112 -68 1002 -65 859 3 914 1 1035 -47 143
--55 223 -139 272 -287 l23 -70 0 -585 c-1 -557 -2 -589 -22 -680 -28 -127 -55
--195 -112 -282 -64 -99 -163 -187 -264 -237 -147 -72 -89 -69 -1148 -72 -985
--2 -1007 -2 -1154 38 -288 78 -516 342 -564 655 -15 98 -26 3921 -12 4028 27
-199 113 391 218 488 100 93 260 155 487 189 87 13 274 15 1333 13 930 -1 1241
-1 1268 10 33 11 95 77 95 102 0 4 -570 8 -1267 7 -1007 -1 -1286 -4 -1354 -14z"/>
+        <path id="icon-ring" d={iconPaths.ring}/>
+        <path id="icon-body-fill" fill="#ffffff" d={iconPaths.bodyFill}/>
+        <path id="icon-body-hook" d={iconPaths.bodyHook}/>
+        <path id="icon-body-outer" d={iconPaths.bodyOuter}/>
+        <!-- "Pen tip" dots: ride #icon-body-hook/-outer's own growing
+             end via CSS Motion Path (offset-path set to the exact same
+             d as each stroke, offset-distance animated 0%->100% in
+             lockstep with --draw-t on the strokes themselves - see the
+             icon-body-dot-move comment in the <style> block for why
+             this uses offset-distance directly instead of the
+             --draw-t/calc() indirection everything else here needs).
+             cx/cy are irrelevant once offset-path takes over
+             positioning - 0,0 is just a neutral default. -->
+        <circle id="icon-body-hook-dot" cx="0" cy="0" r="70"/>
+        <circle id="icon-body-outer-dot" cx="0" cy="0" r="70"/>
       </g>
       </g>
     </g>
@@ -144,13 +182,13 @@
          dashoffset (see ink-stroke-draw below), then snaps to filled -
          the standard "signature draw-on" technique. -->
     <g id="word-inking">
-      <path id="ink-dot1" fill-rule="nonzero" d="M 44.429688 265.441406 C 43.910156 265.441406 43.585938 265.183594 43.457031 264.664062 C 43.328125 264.144531 43.496094 263.753906 43.960938 263.496094 C 44.6875 263.132812 45.335938 262.65625 45.90625 262.058594 C 46.113281 261.851562 46.355469 261.746094 46.625 261.746094 C 46.898438 261.746094 47.136719 261.84375 47.34375 262.039062 C 47.550781 262.234375 47.660156 262.464844 47.675781 262.738281 C 47.6875 263.011719 47.589844 263.25 47.382812 263.457031 C 46.65625 264.210938 45.839844 264.820312 44.933594 265.285156 C 44.78125 265.390625 44.609375 265.441406 44.429688 265.441406 "/>
-      <path id="ink-i1" fill-rule="nonzero" d="M 66.839844 269.117188 C 62.390625 273.871094 54.503906 279.417969 47.875 276.351562 C 43.925781 274.527344 43.9375 270.65625 45.859375 267.1875 C 45.722656 267.433594 43.984375 267.605469 43.667969 268.179688 C 39.441406 275.816406 47 279.742188 53.773438 277.726562 C 59.332031 276.078125 65.113281 272.304688 69.035156 268.121094 C 68.757812 268.417969 67.335938 268.589844 66.839844 269.117188 "/>
-      <path id="ink-n1" fill-rule="nonzero" d="M 66.820312 269.144531 C 66.089844 271.90625 65.355469 274.667969 64.621094 277.429688 C 64.625 277.40625 66.023438 276.882812 66.09375 276.84375 C 69.238281 275.164062 72.753906 269.378906 76.285156 271.726562 C 78.023438 272.878906 78.496094 275.308594 80.609375 276.371094 C 82.402344 277.273438 84.4375 277.535156 86.414062 277.296875 C 91.542969 276.683594 96.855469 273.058594 100.335938 269.449219 C 100.046875 269.746094 98.644531 269.925781 98.140625 270.445312 C 93.933594 274.8125 86.445312 279.003906 81.03125 274.074219 C 78.863281 272.101562 78.679688 268.945312 75.207031 269.609375 C 70.816406 270.445312 68.9375 275.027344 65.390625 276.921875 C 65.882812 276.726562 66.371094 276.53125 66.863281 276.335938 L 69.066406 268.050781 C 68.96875 268.417969 66.992188 268.503906 66.820312 269.144531 "/>
-      <path id="ink-k" fill-rule="nonzero" d="M 100.335938 269.449219 C 103.554688 264.660156 106.25 259.378906 108.367188 254.007812 C 109.441406 251.289062 112.046875 244.730469 106.839844 246.109375 C 103.492188 246.996094 102.140625 250.0625 101.144531 253.082031 C 98.558594 260.910156 98.300781 269.292969 97.164062 277.398438 C 97.175781 277.324219 99.144531 276.597656 99.382812 276.355469 C 100.5625 275.152344 101.738281 273.941406 102.988281 272.808594 C 103.894531 271.957031 104.851562 271.160156 105.855469 270.425781 C 109.164062 269.574219 109.738281 269.664062 107.582031 270.695312 C 106.5 271.710938 104.824219 272.109375 103.730469 273.164062 C 99.992188 276.738281 107.71875 277.359375 110.050781 277.355469 C 117.777344 277.34375 125.902344 273.925781 131.410156 268.539062 C 131.109375 268.835938 129.742188 269.027344 129.21875 269.535156 C 124.164062 274.476562 114.78125 277.917969 107.496094 275.695312 C 100.925781 273.691406 109.972656 270.429688 112.175781 268.125 C 112.183594 268.109375 112.195312 268.09375 112.203125 268.074219 C 110.097656 264.699219 98.015625 276.511719 97.191406 277.347656 C 97.929688 277 98.667969 276.652344 99.40625 276.304688 C 100.199219 270.648438 100.578125 264.914062 101.582031 259.289062 C 101.964844 257.15625 104.886719 244.164062 107.59375 247.820312 C 109.210938 250.003906 105.703125 256.203125 104.789062 258.242188 C 102.890625 262.46875 100.730469 266.601562 98.140625 270.445312 C 98.324219 270.171875 99.953125 270.019531 100.335938 269.449219 "/>
-      <path id="ink-in2" fill-rule="nonzero" d="M 129.800781 268.207031 C 125.855469 277.078125 135.007812 279.207031 141.578125 276.933594 C 146.886719 275.097656 150.960938 271.53125 155.152344 267.910156 C 154.414062 268.257812 153.671875 268.605469 152.933594 268.953125 C 152.484375 271.871094 151.644531 274.703125 151.078125 277.59375 C 151.109375 277.4375 153.035156 276.875 153.296875 276.550781 C 154.335938 275.253906 155.457031 273.40625 156.835938 272.460938 C 158.339844 271.898438 159.847656 271.335938 161.351562 270.769531 C 161.871094 271.101562 162.3125 271.511719 162.671875 272.003906 C 163.449219 272.597656 164.066406 273.605469 164.777344 274.296875 C 167.691406 277.113281 170.472656 277.894531 174.386719 276.84375 C 178.960938 275.617188 183.316406 273.046875 186.589844 269.660156 C 186.304688 269.957031 184.902344 270.132812 184.398438 270.652344 C 181.019531 274.152344 175.097656 277.894531 170.066406 275.554688 C 168.152344 274.667969 166.835938 272.9375 165.402344 271.480469 C 163.632812 269.679688 162.800781 269.039062 160.433594 269.804688 C 156.414062 271.109375 153.660156 274.367188 151.105469 277.546875 C 151.84375 277.199219 152.582031 276.851562 153.324219 276.5 C 153.886719 273.609375 154.726562 270.777344 155.175781 267.859375 C 155.167969 267.910156 153.195312 268.703125 152.960938 268.902344 C 148.117188 273.089844 141.394531 279.199219 134.515625 276.367188 C 130.777344 274.824219 130.601562 270.359375 132.042969 267.113281 C 131.847656 267.558594 130.097656 267.542969 129.800781 268.207031 "/>
-      <path id="ink-dot2" fill-rule="nonzero" d="M 130.695312 265.441406 C 130.179688 265.441406 129.851562 265.183594 129.722656 264.664062 C 129.59375 264.144531 129.761719 263.753906 130.230469 263.496094 C 130.953125 263.132812 131.601562 262.65625 132.171875 262.058594 C 132.378906 261.851562 132.621094 261.746094 132.890625 261.746094 C 133.164062 261.746094 133.402344 261.84375 133.609375 262.039062 C 133.820312 262.234375 133.929688 262.464844 133.941406 262.738281 C 133.957031 263.011719 133.859375 263.25 133.648438 263.457031 C 132.925781 264.210938 132.109375 264.820312 131.199219 265.285156 C 131.046875 265.390625 130.875 265.441406 130.695312 265.441406 "/>
-      <path id="ink-g" fill-rule="nonzero" d="M 194.410156 264.691406 C 190.117188 265.230469 181.503906 269.445312 183.359375 275.089844 C 184.238281 277.769531 186.734375 276.773438 188.457031 275.707031 C 191.285156 273.957031 192.46875 270.703125 193.59375 267.726562 C 192.847656 268.089844 192.101562 268.457031 191.351562 268.820312 C 191.402344 276.855469 190.628906 284.683594 187.234375 292.164062 C 184.351562 298.527344 184.609375 290.695312 185.429688 288.296875 C 186.710938 284.539062 189.355469 281.238281 191.609375 278.019531 C 192.707031 276.453125 193.777344 274.863281 194.9375 273.34375 C 196.289062 271.5625 196.28125 270.855469 198.464844 271.167969 C 201.628906 271.621094 202.867188 273.207031 206.328125 272.367188 C 208.875 271.746094 211.207031 270.355469 213.097656 268.578125 C 212.78125 268.875 211.4375 269.074219 210.902344 269.574219 C 205.621094 274.546875 200.570312 267.207031 195.535156 271.089844 C 192.625 273.335938 190.519531 277.425781 188.457031 280.386719 C 186.074219 283.816406 183.351562 287.425781 182.585938 291.632812 C 181.761719 296.183594 184.582031 297.136719 187.503906 294.417969 C 190.191406 291.917969 191.152344 286.824219 191.988281 283.449219 C 193.335938 277.996094 193.628906 273.289062 193.59375 267.726562 C 193.597656 267.835938 191.511719 268.402344 191.351562 268.820312 C 190.621094 270.746094 188.378906 277.929688 185.855469 274.515625 C 183.257812 270.996094 190.070312 266.082031 192.273438 265.804688 C 192.988281 265.714844 194 264.742188 194.410156 264.691406 "/>
+      <path id="ink-dot1" fill-rule="nonzero" d={inkingStrokes.dot1}/>
+      <path id="ink-i1" fill-rule="nonzero" d={inkingStrokes.i1}/>
+      <path id="ink-n1" fill-rule="nonzero" d={inkingStrokes.n1}/>
+      <path id="ink-k" fill-rule="nonzero" d={inkingStrokes.k}/>
+      <path id="ink-in2" fill-rule="nonzero" d={inkingStrokes.in2}/>
+      <path id="ink-dot2" fill-rule="nonzero" d={inkingStrokes.dot2}/>
+      <path id="ink-g" fill-rule="nonzero" d={inkingStrokes.g}/>
     </g>
 
     <!-- Real per-letter glyph refs (s-t-o-r-e-y-s), each popped in with
@@ -168,31 +206,158 @@
   </svg>
 </div>
 
-<style>
-  #logo-icon path {
+<style define:vars={{ bodyHookD: JSON.stringify(iconPaths.bodyHook), bodyOuterD: JSON.stringify(iconPaths.bodyOuter) }}>
+  /* Every "draw the line on" animation in this file was silently
+     snapping to its end state at the halfway point of its duration
+     instead of drawing on smoothly - confirmed by sampling computed
+     stroke-dashoffset over time in a real (Playwright-driven Chromium)
+     browser, not just reasoning about it. Root cause: `stroke-dashoffset`
+     keyframes whose VALUES are calc()/var() expressions referencing
+     --stroke-length (e.g. `var(--stroke-length)` at 0% and
+     `calc(var(--stroke-length) * 0.826)` at 100%) don't interpolate
+     smoothly even when --stroke-length itself is registered via
+     @property - confirmed with an isolated minimal repro outside this
+     file. What DOES work (also confirmed with an isolated repro): give
+     the animation its own dedicated, registered, non-inherited custom
+     property that keyframes set to plain LITERAL numbers (no var()/
+     calc() inside the keyframes themselves), then reference that
+     property from a *static* (non-animated) calc() expression on the
+     element to compute the actual stroke-dashoffset every frame. --draw-t
+     below is that dedicated 0->1 progress variable; see its use on
+     #word-inking path, #icon-body-hook, and #icon-body-outer further down. */
+  @property --draw-t {
+    syntax: "<number>";
+    inherits: false;
+    initial-value: 0;
+  }
+
+  /* --stroke-length (set per-element by the script below, from
+     getTotalLength()) also needs registering: cross-browser tested with
+     Playwright's Chromium and Firefox builds, and Firefox would not
+     evaluate a calc() that mixed this (unregistered) with the
+     registered --draw-t above at all - the whole stroke-dashoffset
+     formula silently fell back to 0 instead of erroring, so this was
+     easy to miss without actually sampling computed styles in Firefox
+     specifically. */
+  @property --stroke-length {
+    syntax: "<number>";
+    inherits: false;
+    initial-value: 0;
+  }
+
+  /* The dot/ring: no stroke-draw at all, just a filled shape that
+     scales up from near-zero at its own center. At small scale the
+     hole is sub-pixel and it reads as a solid dot; growing it makes
+     the ring open up organically, the way a pen-drawn dot fattens if
+     you don't lift the nib. */
+  #icon-ring {
+    fill: #ffffff;
+    transform-box: fill-box;
+    transform-origin: center;
+    opacity: 0;
+  }
+
+  /* The permanent thick-ribbon icon, invisible until the two thin
+     centerline strokes below finish drawing on, then fades in on top
+     of them (see icon-body-fill-in below) - the "signature draw-on,
+     then snaps to filled" technique, same idea as ink-stroke-draw,
+     just via opacity instead of a fill-color snap since this shape's
+     stroke and fill outline aren't the same geometry (see the
+     top-of-file comment for why: this path is a ribbon OUTLINE, not a
+     stroke-friendly centerline). */
+  #icon-body-fill {
+    opacity: 0;
+  }
+
+  #icon-body-hook,
+  #icon-body-outer {
     fill: none;
     stroke: #ffffff;
-    /* Bigger than the wordmark strokes' stroke-width (3) because this
+    /* Bigger than the wordmark strokes' stroke-width (0.6) because this
        path lives in `icon.svg`'s own much larger native coordinate
        space (0-395/0-699, vs. the wordmark's ~180-wide space) - it
        gets scaled back down by #logo-icon's transform along with
        everything else. */
-    stroke-width: 130;
+    stroke-width: 35;
     stroke-linecap: round;
     stroke-linejoin: round;
-    stroke-dasharray: var(--stroke-length, 3000);
-    stroke-dashoffset: var(--stroke-length, 3000);
+  }
+  /* --draw-t (see @property above) is what the animation actually
+     touches (see icon-body-draw below); these compute the real
+     stroke-dashoffset from it every frame, so the *animated* property
+     (--draw-t) only ever carries a plain 0->1 number, never a
+     var()/calc() expression, which is what makes it interpolate
+     smoothly (see the @property comment above for why). Both strokes
+     are now simple, single-direction, start-to-end reveals - no more
+     forward/backward split-and-meet arithmetic, since #icon-body-hook
+     and #icon-body-outer are already two separate paths, each running
+     from its own natural start point down to the shared bottom point
+     (see the top-of-file comment for how that split was derived). The
+     trailing `* 1px` on both dasharray and dashoffset is load-bearing,
+     not decorative: Chromium accepts a bare number for these
+     properties, but Firefox requires the calc() to resolve to an
+     explicit <length> - without a unit anywhere in the expression it
+     silently computes to `none`/`0px` instead of erroring. Confirmed
+     with an isolated repro across both engines before finding this. */
+  #icon-body-hook {
+    stroke-dasharray: calc(var(--stroke-length, 10666) * 1px);
+    stroke-dashoffset: calc(var(--stroke-length, 10666) * (1 - var(--draw-t, 0)) * 1px);
+  }
+  #icon-body-outer {
+    stroke-dasharray: calc(var(--stroke-length, 9776) * 1px);
+    stroke-dashoffset: calc(var(--stroke-length, 9776) * (1 - var(--draw-t, 0)) * 1px);
+  }
+
+  /* "Pen tip" dots that ride each stroke's own growing end, via CSS
+     Motion Path rather than the --draw-t/calc() approach everything
+     else here uses - `offset-distance` is a normal, natively-
+     animatable property (unlike stroke-dashoffset built from a
+     var()/calc() expression), so it interpolates smoothly with a
+     plain 0%->100% keyframe with no custom-property indirection
+     needed - confirmed with an isolated repro in both Chromium and
+     Firefox before wiring this up. `offset-path` is set to the exact
+     same `d` as the matching stroke via `var(--bodyHookD)`/
+     `var(--bodyOuterD)` (see `define:vars` on this <style> tag, and
+     `src/components/preloader/icon-paths.ts`) rather than a second
+     literal copy of that huge string, so the dot always sits precisely
+     on the tip of the line currently being drawn and there's exactly
+     one place each path's data lives. A CSS custom property can hold
+     a quoted string and be substituted straight into `path()` -
+     confirmed with an isolated repro in both engines before relying on
+     it here, same as everything else non-obvious in this file - but
+     `define:vars` itself doesn't add those quotes for you (it writes
+     the raw value as-is), so the frontmatter passes
+     `JSON.stringify(iconPaths.bodyHook)` rather than the bare string;
+     without it `path()` silently computes to `none` instead of
+     erroring, exactly like every other "this looks like it should
+     just work" CSS gotcha logged in this file today. */
+  #icon-body-hook-dot,
+  #icon-body-outer-dot {
+    fill: #ffffff;
     opacity: 0;
+  }
+  #icon-body-hook-dot {
+    offset-path: path(var(--bodyHookD));
+  }
+  #icon-body-outer-dot {
+    offset-path: path(var(--bodyOuterD));
   }
 
   #word-inking path {
     fill: none;
     stroke: #ffffff;
-    stroke-width: 3;
+    stroke-width: 0.6;
     stroke-linecap: round;
     stroke-linejoin: round;
-    stroke-dasharray: var(--stroke-length, 1000);
-    stroke-dashoffset: var(--stroke-length, 1000);
+    /* See the #icon-body-hook/-outer dasharray comment - same `* 1px`
+       requirement for Firefox to actually apply the dash pattern. */
+    stroke-dasharray: calc(var(--stroke-length, 1000) * 1px);
+    /* See the --draw-t comment above #icon-body-hook - same reasoning
+       (including the load-bearing `* 1px` for Firefox): --draw-t
+       (animated by ink-stroke-draw below, 0->1 by 65% then held) is
+       what's actually animated; this static formula turns that into
+       the real dashoffset every frame. */
+    stroke-dashoffset: calc(var(--stroke-length, 1000) * (1 - var(--draw-t, 0)) * 1px);
     opacity: 0;
   }
 
@@ -230,24 +395,86 @@
      * applied for the entire draw phase too, not just the end - so
      * nothing was ever visible until each stroke's very last instant,
      * which read as strokes "disappearing" right after being drawn.
+     * --draw-t (not stroke-dashoffset directly - see the @property
+     * comment near the top of this block) ramps 0->1 by 65%, then
+     * holds at 1 through 100%; the actual stroke-dashoffset is computed
+     * from it on #word-inking path above.
      */
     0% {
       opacity: 1;
       fill: none;
       stroke: #ffffff;
-      stroke-dashoffset: var(--stroke-length, 1000);
+      --draw-t: 0;
     }
     65% {
       opacity: 1;
       fill: none;
       stroke: #ffffff;
-      stroke-dashoffset: 0;
+      --draw-t: 1;
     }
     100% {
       opacity: 1;
       fill: #ffffff;
       stroke: #ffffff;
-      stroke-dashoffset: 0;
+      --draw-t: 1;
+    }
+  }
+
+  @keyframes icon-ring-expand {
+    0% {
+      opacity: 1;
+      transform: scale(0.05);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  /*
+   * Drives #icon-body-hook and #icon-body-outer's shared --draw-t 0->1
+   * (see the @property comment near the top of this block, and the
+   * stroke-dashoffset formulas on those two selectors above - each
+   * derives its own length from the same plain 0->1 number, which is
+   * why one shared keyframe covers both). Both start fully undrawn and
+   * finish fully drawn at the same instant, landing on the same
+   * bottom point (see the top-of-file comment for how that point was
+   * found), so the two strokes appear to travel from the icon's two
+   * ends and meet at the bottom.
+   */
+  @keyframes icon-body-draw {
+    0% {
+      --draw-t: 0;
+    }
+    100% {
+      --draw-t: 1;
+    }
+  }
+
+  /* Moves the pen-tip dots along their own stroke (see the
+     #icon-body-hook-dot/-outer-dot comment above) - offset-distance
+     tracks the same 0->1 progress as --draw-t above (same duration/
+     easing on the .run trigger keeps them in lockstep), fading out
+     right at the end since the tip has nothing left to mark once its
+     stroke is fully drawn. */
+  @keyframes icon-body-dot-move {
+    0% {
+      opacity: 1;
+      offset-distance: 0%;
+    }
+    95% {
+      opacity: 1;
+      offset-distance: 95%;
+    }
+    100% {
+      opacity: 0;
+      offset-distance: 100%;
+    }
+  }
+
+  @keyframes icon-body-fill-in {
+    to {
+      opacity: 1;
     }
   }
 
@@ -291,86 +518,108 @@
 
   /*
    * Timeline (only runs once the JS below adds the `.run` class - see
-   * "why gate this behind JS?" note in the script):
-   *   0.0s - 0.85s  the icon mark draws on (ring, then the "S" body)
-   *   0.85s - 2.80s the 7 "inking" strokes draw in one at a time, 0.24s
+   * "why gate this behind JS?" note in the script). The icon's own
+   * draw-on (ring + body) now takes 4.0s - up from an original 0.85s,
+   * same 35/65 split between the two stages - and everything after it
+   * keeps its original durations from the 4.8s-total version, just
+   * pushed back by the 3.15s difference. Total is now 7.95s:
+   *   0.00s - 2.60s the "S" body's two thin centerline strokes draw on
+   *                 from their own ends at once, meeting at the bottom
+   *                 (see icon-body-draw above), each with a "pen tip"
+   *                 dot riding its growing end (icon-body-dot-move) and
+   *                 fading out right as it lands; then the permanent
+   *                 thick-ribbon icon fades in on top of them
+   *                 (icon-body-fill-in, 2.60s - 2.80s)
+   *   2.60s - 4.00s the ring pops open from a dot
+   *   4.00s - 5.95s the 7 "inking" strokes draw in one at a time, 0.24s
    *                 apart (last two - the 2nd i's dot and "g" - given a
    *                 bit more room since they read as separate beats)
-   *   2.70s - 3.60s "storeys"'s 7 letters pop in, 0.1s apart, starting
+   *   5.85s - 6.75s "storeys"'s 7 letters pop in, 0.1s apart, starting
    *                 just before the last ink stroke finishes so the two
    *                 words flow together rather than pausing between them
-   *   3.60s - 4.00s hold, fully written
-   *   4.00s - 4.75s icon flies from its splash position to exactly
+   *   6.75s - 7.15s hold, fully written
+   *   7.15s - 7.90s icon flies from its splash position to exactly
    *                 where it sits in Nav.astro (see logo-fly); the
    *                 wordmark has nowhere to fly to (Nav is icon-only),
-   *                 so it fades out instead (wordmark-fade-out, 4.00s -
-   *                 4.50s) rather than hanging in place
-   *   4.10s - 4.80s backdrop dissolves (starts just after the fly
+   *                 so it fades out instead (wordmark-fade-out, 7.15s -
+   *                 7.65s) rather than hanging in place
+   *   7.25s - 7.95s backdrop dissolves (starts just after the fly
    *                 begins, so the page doesn't show through before the
    *                 icon starts moving; ends just after the fly lands,
    *                 so nothing's visible behind the mark mid-flight)
    */
-  #preloader.run #icon-path {
-    animation: ink-stroke-draw 0.85s ease-out 0s forwards;
+  #preloader.run #icon-body-hook,
+  #preloader.run #icon-body-outer {
+    animation: icon-body-draw 2.6s ease-out 0s forwards;
+  }
+  #preloader.run #icon-body-hook-dot,
+  #preloader.run #icon-body-outer-dot {
+    animation: icon-body-dot-move 2.6s ease-out 0s forwards;
+  }
+  #preloader.run #icon-body-fill {
+    animation: icon-body-fill-in 0.2s ease-out 2.6s forwards;
+  }
+  #preloader.run #icon-ring {
+    animation: icon-ring-expand 1.4s ease-out 2.6s forwards;
   }
 
   #preloader.run #word-inking path:nth-child(1) {
-    animation: ink-stroke-draw 0.4s ease-out 0.85s forwards;
+    animation: ink-stroke-draw 0.4s ease-out 4.0s forwards;
   }
   #preloader.run #word-inking path:nth-child(2) {
-    animation: ink-stroke-draw 0.4s ease-out 1.09s forwards;
+    animation: ink-stroke-draw 0.4s ease-out 4.24s forwards;
   }
   #preloader.run #word-inking path:nth-child(3) {
-    animation: ink-stroke-draw 0.4s ease-out 1.33s forwards;
+    animation: ink-stroke-draw 0.4s ease-out 4.48s forwards;
   }
   #preloader.run #word-inking path:nth-child(4) {
-    animation: ink-stroke-draw 0.45s ease-out 1.57s forwards;
+    animation: ink-stroke-draw 0.45s ease-out 4.72s forwards;
   }
   #preloader.run #word-inking path:nth-child(5) {
-    animation: ink-stroke-draw 0.5s ease-out 1.85s forwards;
+    animation: ink-stroke-draw 0.5s ease-out 5.0s forwards;
   }
   #preloader.run #word-inking path:nth-child(6) {
-    animation: ink-stroke-draw 0.35s ease-out 2.2s forwards;
+    animation: ink-stroke-draw 0.35s ease-out 5.35s forwards;
   }
   #preloader.run #word-inking path:nth-child(7) {
-    animation: ink-stroke-draw 0.4s ease-out 2.4s forwards;
+    animation: ink-stroke-draw 0.4s ease-out 5.55s forwards;
   }
 
   #preloader.run #word-storeys use:nth-child(1) {
-    animation: letter-pop-in 0.3s ease-out 2.7s forwards;
+    animation: letter-pop-in 0.3s ease-out 5.85s forwards;
   }
   #preloader.run #word-storeys use:nth-child(2) {
-    animation: letter-pop-in 0.3s ease-out 2.8s forwards;
+    animation: letter-pop-in 0.3s ease-out 5.95s forwards;
   }
   #preloader.run #word-storeys use:nth-child(3) {
-    animation: letter-pop-in 0.3s ease-out 2.9s forwards;
+    animation: letter-pop-in 0.3s ease-out 6.05s forwards;
   }
   #preloader.run #word-storeys use:nth-child(4) {
-    animation: letter-pop-in 0.3s ease-out 3.0s forwards;
+    animation: letter-pop-in 0.3s ease-out 6.15s forwards;
   }
   #preloader.run #word-storeys use:nth-child(5) {
-    animation: letter-pop-in 0.3s ease-out 3.1s forwards;
+    animation: letter-pop-in 0.3s ease-out 6.25s forwards;
   }
   #preloader.run #word-storeys use:nth-child(6) {
-    animation: letter-pop-in 0.3s ease-out 3.2s forwards;
+    animation: letter-pop-in 0.3s ease-out 6.35s forwards;
   }
   #preloader.run #word-storeys use:nth-child(7) {
-    animation: letter-pop-in 0.3s ease-out 3.3s forwards;
+    animation: letter-pop-in 0.3s ease-out 6.45s forwards;
   }
 
   #preloader.run #logo-icon {
-    animation: logo-fly 0.75s cubic-bezier(0.65, 0, 0.35, 1) 4s forwards;
+    animation: logo-fly 0.75s cubic-bezier(0.65, 0, 0.35, 1) 7.15s forwards;
   }
   /* Nav no longer shows the wordmark (icon-only now), so there's
      nowhere for this half of the mark to fly to - it fades out instead
      of hanging motionless in the middle of the screen while the icon
      flies off and the backdrop dissolves around it. */
   #preloader.run #logo-wordmark {
-    animation: wordmark-fade-out 0.5s ease-in 4s forwards;
+    animation: wordmark-fade-out 0.5s ease-in 7.15s forwards;
   }
 
   #preloader.run #preloader-backdrop {
-    animation: preloader-backdrop-out 0.7s ease-in 4.1s forwards;
+    animation: preloader-backdrop-out 0.7s ease-in 7.25s forwards;
   }
 </style>
 
@@ -391,12 +640,13 @@
     sessionStorage.setItem("inking-storeys-preloaded", "1");
     document.documentElement.style.overflow = "hidden";
 
-    // The icon and each "inking" stroke draw on via stroke-dasharray/
+    // The icon body and each "inking" stroke draw on via stroke-dasharray/
     // dashoffset, which needs each path's actual rendered length -
     // there's no CSS-only way to get this (unlike a fixed-length font
-    // glyph), so it's measured here per-path and exposed to the CSS
-    // keyframes (ink-stroke-draw, above) as a custom property.
-    el.querySelectorAll<SVGPathElement>("#logo-icon path, #word-inking path").forEach((path) => {
+    // glyph), so it's measured here per-path and exposed to the static
+    // calc() formulas (see the --draw-t comment near the top of the
+    // <style> block) as a custom property.
+    el.querySelectorAll<SVGPathElement>("#icon-body-hook, #icon-body-outer, #word-inking path").forEach((path) => {
       path.style.setProperty("--stroke-length", String(path.getTotalLength()));
     });
 
@@ -442,7 +692,7 @@
 
     // Safety net: guarantee cleanup even if the animation is interrupted
     // (backgrounded tab, dropped frames) and its end event never fires.
-    setTimeout(finish, 5600);
+    setTimeout(finish, 8750);
 
     // Why gate the CSS animation behind adding this class instead of
     // letting it run unconditionally the moment the element paints?

@@ -2,7 +2,9 @@
 /**
  * Homepage's curated project grid: up to 4 projects flagged
  * `is_featured_on_home: true` in their frontmatter (see
- * src/content.config.ts), most recently completed first. Renders an
+ * src/content.config.ts). Ongoing projects (no completion_date yet)
+ * lead the grid; Completed ones follow, most recently completed
+ * first. Renders an
  * asymmetric magazine-style layout via `spanClasses` below (index 0
  * gets a large 2-row hero slot, 1-2 sit alongside it, 3 spans full
  * width beneath) - if more or fewer than 4 projects are ever featured,
@@ -22,7 +24,12 @@ import SectionHeading from "../SectionHeading.astro";
 
 const allFeatured = await getCollection("projects", ({ data }) => data.is_featured_on_home);
 const projects = allFeatured
-  .sort((a, b) => b.data.completion_date.valueOf() - a.data.completion_date.valueOf())
+  .sort((a, b) => {
+    if (a.data.status !== b.data.status) return a.data.status === "Ongoing" ? -1 : 1;
+    // Both Ongoing: no completion_date to compare, so leave their relative order as-is.
+    if (a.data.status === "Ongoing") return 0;
+    return b.data.completion_date!.valueOf() - a.data.completion_date!.valueOf();
+  })
   .slice(0, 4);
 
 /** Grid placement per card index, matched positionally - see the layout note above. */
@@ -75,23 +82,65 @@ const spanClasses = [
               image's own `transform`, so both effects coexist cleanly.
             -->
             <div class="absolute inset-0 -m-32 overflow-hidden transition-transform duration-700 ease-out group-hover:scale-105">
-              <Image
-                src={project.data.hero_media.url}
-                alt={project.data.hero_media.alt}
-                width={1200}
-                height={1500}
-                quality={65}
-                format="webp"
-                class="h-full w-full object-cover will-change-transform"
-                data-parallax-speed="0.7"
-                loading="lazy"
-              />
+              <!--
+                `hero_media.url` is a `string | ImageMetadata` union
+                (see content.config.ts) - real project photos resolve
+                to an imported ImageMetadata via the `image()` schema
+                helper, while the placeholder Unsplash entries stay
+                plain remote URL strings. <Image>'s `src` prop is a
+                discriminated union (LocalImageProps | RemoteImageProps)
+                rather than accepting that union directly, so this has
+                to branch on `typeof` to let TypeScript narrow it to
+                whichever branch actually applies per project.
+              -->
+              <!--
+                No `height` here (deliberately, was `height={1500}`
+                against a fixed `width={1200}` before, forcing every
+                photo into the same portrait 4:5 crop at *build* time
+                regardless of the card's actual shape) - card shapes
+                vary a lot here (portrait on mobile, but the hero slot
+                is `col-span-4 row-span-2`, wide on desktop), so a
+                fixed portrait pre-crop meant the wide slot was
+                cropping the *sides* off an image that was already
+                cropped down to a narrow strip, compounding into a
+                much tighter/more-zoomed result than either crop step
+                alone. `inferSize` (+ only `width` capping the output
+                resolution) keeps the encoded image at its natural
+                aspect ratio instead, so `object-cover` below does the
+                only crop, sized correctly for whichever card it's
+                actually in.
+              -->
+              {typeof project.data.hero_media.url === "string" ? (
+                <Image
+                  src={project.data.hero_media.url}
+                  alt={project.data.hero_media.alt}
+                  inferSize
+                  width={1200}
+                  quality={65}
+                  format="webp"
+                  class="h-full w-full object-cover will-change-transform"
+                  data-parallax-speed="0.7"
+                  loading="lazy"
+                />
+              ) : (
+                <Image
+                  src={project.data.hero_media.url}
+                  alt={project.data.hero_media.alt}
+                  width={1200}
+                  quality={65}
+                  format="webp"
+                  class="h-full w-full object-cover will-change-transform"
+                  data-parallax-speed="0.7"
+                  loading="lazy"
+                />
+              )}
             </div>
           </div>
           <div class="absolute inset-0 bg-gradient-to-t from-terracotta/70 via-terracotta/0 to-transparent"></div>
           <div class="absolute inset-x-0 bottom-0 p-6 text-alabaster">
             <p class="font-nav text-[11px] uppercase tracking-[0.2em] text-alabaster/70">
               {project.data.discipline} · {project.data.location}
+              {project.data.status === "Ongoing" && <span class="text-terracotta-light"> · Ongoing</span>}
             </p>
             <h3 class="mt-2 font-serif text-2xl md:text-3xl">{project.data.title}</h3>
           </div>

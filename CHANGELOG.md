@@ -18,130 +18,166 @@ See also [`AGENTS.md`](./AGENTS.md) for AI-assistant instructions.
 
 ### Added
 
-- Initial Astro 7 + Tailwind v4 scaffold: design tokens, content
-  collections, global layout, homepage sections — originally with GSAP
-  + ScrollTrigger + Lenis (removed, see Performance).
-- Content imagery moved to `astro:assets` (WebP at build time) after
-  diagnosing unoptimized source images, not animation code, as the
-  cause of scroll jank.
+- Initial Astro 7 + Tailwind v4 scaffold (originally with GSAP +
+  ScrollTrigger + Lenis, removed — see Performance).
+- Content images moved to `astro:assets`/WebP — unoptimized source
+  images, not animation code, were the actual cause of scroll jank.
 
 ### Changed
 
-- Navbar converged to: wordmark/hamburger below `lg`, full inline links
-  at `lg`+, always-on blurred background.
-- Scroll/motion simplified after feedback the original animation set
-  felt busy. Lenis switched from restart-y `duration` easing to
-  continuous `lerp` smoothing for a less clunky mouse-wheel feel.
+- Navbar converged to: wordmark/hamburger below `lg`, full inline
+  links at `lg`+, always-on blurred background.
+- Scroll/motion simplified (original set felt busy); Lenis switched to
+  continuous `lerp` smoothing.
 
 ### Performance
 
-- Removed GSAP+ScrollTrigger (~90% of shipped JS, doing almost nothing
-  after simplification) for native `requestAnimationFrame`/
-  `IntersectionObserver`. Removed Lenis for a ~1.2KB hand-rolled
-  smoother. JS: ~148KB raw/55KB gzip → ~35KB/10.6KB.
-- Preloader rebuilt without GSAP (CSS `@keyframes` + `setTimeout`
-  safety net) — old version could strand visitors behind an opaque
-  splash if the GSAP import failed.
+- Replaced GSAP+ScrollTrigger with native rAF/IntersectionObserver,
+  and Lenis with a ~1.2KB hand-rolled smoother. JS ~148KB → ~35KB raw.
+- Preloader rebuilt without GSAP (pure CSS + `setTimeout` safety net)
+  — a failed GSAP import could previously strand visitors on an opaque
+  splash.
 - Hero carousel defers loading slides 2/3.
 
 ### Fixed
 
-- Hamburger/close icon was invisible against the curtain overlay (same
-  color).
-- Parallax broke Featured Projects' grid row-height (was depending on
-  an image's in-flow size); fixed with explicit `auto-rows`.
+- Hamburger/close icon was invisible against the curtain overlay.
+- Parallax broke Featured Projects' grid row-height; fixed with
+  explicit `auto-rows`.
 
 ### Removed
 
-- Dead theme animation; duplicated social-links and section-heading
-  markup consolidated into shared components.
+- Dead theme animation; consolidated duplicated social-links and
+  section-heading markup into shared components.
 
 ### Fixed (production-readiness audit)
 
-- Mobile curtain menu had no focus trap/`inert`/Escape handling (WAI-
-  ARIA dialog pattern). Also fixed duplicate-listener leak from
-  re-registering on every client-side nav.
-- No SEO/social metadata — added canonical/OG/Twitter tags, sitemap,
-  robots.txt. `astro.config.mjs`'s `site` still needs the real domain.
-- `README.md` was one line — replaced with real docs.
+- Mobile menu had no focus trap/`inert`/Escape handling; also fixed a
+  duplicate-listener leak on client-side nav.
+- Added SEO/social meta, sitemap, robots.txt.
+- Replaced one-line `README.md` with real docs.
 
 ## 2026-08-06
 
 ### Added
 
-- Real brand assets in `public/` from a supplied kit — kept only what
-  code actually uses (favicon, apple-touch-icon, logo, og-image);
-  dropped unused colorways/PWA sizes since `public/` ships as-is.
+- Real brand assets in `public/` from the supplied kit.
 - Preloader rebuilt with a real handwriting animation ("inking" draws
   stroke-by-stroke, "storeys" pops in letter by letter, icon draws
-  first). The brand kit's SVGs were flattened with no per-letter/stroke
-  data, so the studio's Illustrator file was converted via
-  `pdftocairo -svg`, which preserved separate glyphs/strokes. Assembled
-  into `wordmark-animated.svg`, duplicated inline in `Preloader.astro`
-  since the per-stroke CSS animation needs to target individual paths
-  (impossible through an `<img>`). Strokes draw via `stroke-dasharray`/
-  `dashoffset`, lengths measured at runtime via `getTotalLength()`. The
-  Illustrator file's icon was a raster scan, not vector, so the already-
-  vectorized `icon.svg` is reused for its draw-on instead.
-- Identified the supplied `Fonts/` against the extracted letterforms
-  (not needed by the build, useful for future edits): "inking" is
-  **Halimun** (exact match); "storeys"/tagline closest to **Avenir LT
-  Std 45 Book** (family match, not confirmed exact). Kept those two;
-  dropped the non-matching Avenir Condensed weight and `Harmattan/`.
-- Preloader's exit is now a shared-element transition: the icon flies
-  from its splash position to its real position in `Nav.astro`
-  (measured via `getBoundingClientRect`, since that varies by
-  viewport), while the backdrop dissolves separately — reads as the
-  logo relocating into the navbar rather than fading away.
+  first) — traced from the studio's Illustrator file (`pdftocairo`),
+  since the kit's SVGs were flattened with no per-stroke data.
+- Identified brand fonts from the supplied kit: "inking" = Halimun;
+  "storeys"/tagline ≈ Avenir LT Std 45 Book.
+- Preloader exit is a shared-element transition: icon flies to its
+  real position in `Nav.astro`, backdrop dissolves separately.
 
 ### Changed
 
-- Nav/Footer text wordmarks swapped for the brand's actual script
-  wordmark, later upgraded to the crisper Illustrator-sourced version.
-- Nav header background switched from translucent alabaster to
-  charcoal (matching footer/curtain menu); nav text flipped light-on-
-  dark to match.
-- Nav and Footer logos sized up several times over the session (final:
-  Nav icon+wordmark `h-11`/`md:h-14`, Footer icon+wordmark side-by-side
-  at `h-20`/`md:h-24`, dropping Footer's stacked tagline layout).
-- Nav icon made bigger and bolder via a `feMorphology dilate` filter
-  (no `font-weight` available on a filled shape) in a dedicated
-  `icon-nav.svg`, scoped to the navbar only — Footer/favicon/Preloader
-  keep the regular weight, so there's a brief weight "pop" when the
-  preloader's flown icon is swapped for the bold nav one.
+- Nav/Footer wordmarks swapped to the brand's real script wordmark.
+- Nav header background: alabaster → charcoal (matches footer/curtain
+  menu); text flipped light-on-dark.
+- Nav/Footer logos sized up; Nav icon bolded via `feMorphology dilate`
+  (scoped to nav only).
 
 ### Fixed
 
-- "inking" strokes were disappearing right after being drawn: `stroke`
-  was declared only at the `100%` keyframe, and CSS holds a
-  single-keyframe property's value for the *whole* animation — so
-  `stroke: none` applied from `0%`. Fixed by declaring it at every stop.
-- The icon's positioning `transform` attribute would've been discarded
-  (not combined with) by the CSS fly-animation transform. Fixed by
-  moving that positioning to a nested inner group.
-- Whole preloader was invisible in production builds: the absolutely-
-  positioned backdrop was painting over the non-positioned SVG mark
-  regardless of DOM order (positioned elements always paint above
-  static ones). Fixed with `relative` on the SVG. Only caught by
-  running the real build in a headless browser, not by reading the
-  compiled output.
-- Removing Nav's wordmark left the preloader's flying wordmark with
-  nowhere to land; it now fades out instead of hanging in place.
+- "inking" strokes were disappearing right after drawing — `stroke`
+  needs declaring at every keyframe, not just the end one.
+- Icon's positioning `transform` was getting discarded by the
+  fly-animation transform; moved to a nested group.
+- Preloader was invisible in production builds — an absolutely-
+  positioned backdrop painted over the static SVG regardless of DOM
+  order; fixed with `relative`.
+- Flying wordmark had nowhere to land once Nav dropped its own
+  wordmark; fades out instead.
 
 ### Reverted
 
-- "inking" was lightened everywhere via `feMorphology erode` — undone
-  per follow-up request, back to original weight.
-- Nav's wordmark image removed per request — icon-only now.
+- "inking" lightening (`feMorphology erode`) undone.
+- Nav wordmark removed — icon-only now.
 
 ### Changed
 
-- Dark surfaces (Nav header/curtain menu, Footer, Preloader backdrop,
-  Hero, Testimonials, and photo-darkening overlays on Hero/Featured
-  Projects) switched from charcoal to terracotta; their accent color
-  (`terracotta-light`, plus all logo files rendered on them - `icon.svg`,
-  `icon-nav.svg`, `wordmark-animated.svg`) switched to white so they
-  still read against the new red background. Body text and the main
-  light-background terracotta accent (eyebrows, links) are unchanged -
-  scoped that way on request, since white text/links would be invisible
-  on the site's light alabaster background.
+- Dark surfaces switched charcoal → terracotta; their accent/logo
+  color switched to white to stay legible. Light-background terracotta
+  accents unchanged.
+
+## 2026-08-14
+
+### Changed
+
+- Base terracotta iterated across the session: `#c84b31` → `#c97e5d`
+  → `#a36a56` (final). Added a full `--color-terracotta-{50..950}`
+  tonal scale, computed offline in Oklab from the base via mix-ratio
+  blending toward white/black (not fixed lightness stops, which
+  happened to land 500 and 600 almost on top of each other for one
+  candidate base).
+- Site header iterated: translucent+blur → solid terracotta-700 →
+  final state of terracotta-600 at 92% opacity, no blur.
+- Preloader icon/"inking" stroke widths thinned considerably.
+- Preloader icon draw-on reworked multiple times:
+  - Ring now scales open from a dot instead of stroke-drawing.
+  - Body was originally a dual-direction dash-reveal on the ribbon's
+    *outline* (a closed loop, split at its one seam) — replaced
+    entirely after reference footage showed two genuinely separate
+    strokes. Extracted the ribbon's actual *centerline* offline
+    (Voronoi/medial-axis + graph-diameter method), split it at its
+    bottom point, refit as bezier curves (`#icon-body-hook`/`-outer`)
+    — two independent strokes meeting at the bottom. The original
+    ribbon outline is kept as `#icon-body-fill`, fading in once both
+    strokes finish.
+  - Added "pen tip" dots riding each stroke via CSS Motion Path
+    (`offset-path`/`offset-distance`).
+  - Root-caused two real cross-browser bugs along the way, both
+    invisible in Chromium but breaking the animation entirely in
+    Firefox (confirmed with Playwright against both engines, not
+    assumed): `stroke-dashoffset` keyframes built from `calc()`/`var()`
+    don't interpolate smoothly (fixed via a dedicated `--draw-t`
+    custom property animated through literal values only); Firefox
+    requires `dasharray`/`dashoffset` `calc()`s to resolve to an
+    explicit `<length>` (bare numbers silently compute to `none`/`0px`).
+  - Icon draw-on duration: 0.85s → 4.0s (only that stage, not the
+    whole preloader); total preloader runtime now ~7.95s.
+
+### Added
+
+- First real project: Chechani's Residence (Jaipur, ongoing), added
+  as `is_featured_on_home`. Photos co-located under
+  `src/content/projects/` and wired through content.config.ts's
+  `image()` helper for build-time optimization.
+- `status: "Completed" | "Ongoing"` added to the project schema;
+  `completion_date` now optional (required only when Completed).
+  Ongoing projects sort first on the homepage grid and show an
+  "· Ongoing" tag.
+
+### Removed
+
+- All 6 placeholder Unsplash project entries — Chechani's Residence is
+  the only one now.
+- Hero carousel's 3 fictional-project slides, replaced with 3 of
+  Chechani's own photos (imported locally for build-time optimization).
+
+### Fixed
+
+- Hero and Featured Projects card images were over-cropping real
+  project photos — a fixed aspect ratio was forced at build time
+  regardless of actual display shape, compounding with runtime
+  `object-cover` cropping. Fixed by requesting natural aspect ratios
+  and letting `object-cover` do the only crop; also eased the Hero
+  parallax overscan/speed and switched its overlay tint from reddish
+  terracotta to black.
+
+### Changed
+
+- Preloader's inline SVG path data (icon, "storeys" glyphs, "inking"
+  strokes) moved out of `Preloader.astro` into `src/components/
+  preloader/{icon-paths,glyphs,inking-strokes}.ts`, per request. Also
+  fixed a real duplication along the way: the icon body's `d` strings
+  used to appear twice verbatim (once as a `<path d>`, again inside a
+  CSS `offset-path: path("...")` for the matching pen-tip dot) - now
+  the CSS side reads the same constant via `define:vars`. That
+  surfaced its own gotcha: `define:vars` writes a string value's raw
+  text as-is, without adding CSS quotes, so `path(var(--x))` silently
+  computed to `none` until the value was wrapped in
+  `JSON.stringify()` first - confirmed with Playwright against both
+  Chromium and Firefox before and after the fix, not assumed.

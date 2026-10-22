@@ -11,6 +11,7 @@ import "../styles/global.css";
 import Preloader from "../components/Preloader.astro";
 import Nav from "../components/Nav.astro";
 import Footer from "../components/Footer.astro";
+import { withBase } from "../lib/url";
 
 interface Props {
   /** Rendered as "{title} · Inking Storeys" in the <title> tag and used verbatim for og:title/twitter:title. */
@@ -31,11 +32,13 @@ const {
 } = Astro.props;
 
 const pageTitle = `${title} · Inking Storeys`;
-// Astro.site comes from the `site` field in astro.config.mjs - update
-// that once the real production domain is known, and this (along with
-// the sitemap and robots.txt) will follow automatically.
+// Astro.site/base come from astro.config.mjs. Astro.url.pathname
+// already includes the base; a root-relative `image` doesn't, so it
+// gets prefixed here.
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
-const ogImageURL = image ? new URL(image, Astro.site) : undefined;
+const ogImageURL = image
+  ? new URL(image.startsWith("/") ? withBase(image) : image, Astro.site)
+  : undefined;
 ---
 
 <!doctype html>
@@ -43,9 +46,9 @@ const ogImageURL = image ? new URL(image, Astro.site) : undefined;
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" href="/favicon.ico" sizes="any" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="icon" href={withBase("/favicon.ico")} sizes="any" />
+    <link rel="icon" type="image/svg+xml" href={withBase("/favicon.svg")} />
+    <link rel="apple-touch-icon" href={withBase("/apple-touch-icon.png")} />
     <link rel="canonical" href={canonicalURL} />
     <meta name="description" content={description} />
     <title>{pageTitle}</title>

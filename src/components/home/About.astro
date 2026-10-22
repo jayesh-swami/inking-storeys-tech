@@ -8,6 +8,7 @@
  * without exposing empty edges as the image drifts).
  */
 import { Image } from "astro:assets";
+import { withBase } from "../../lib/url";
 ---
 
 <section class="overflow-hidden bg-sand px-6 py-24 md:px-10 md:py-32">
@@ -26,7 +27,7 @@ import { Image } from "astro:assets";
         and built to age well.
       </p>
       <a
-        href="/about"
+        href={withBase("/about")}
         class="font-nav mt-10 inline-flex items-center gap-2 border-b border-charcoal/40 pb-1 text-xs uppercase tracking-widest text-charcoal transition-colors hover:border-terracotta hover:text-terracotta"
       >
         Our Story

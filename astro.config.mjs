@@ -8,11 +8,15 @@ import sitemap from '@astrojs/sitemap';
 
 // https://astro.build/config
 export default defineConfig({
-  // TODO: replace with the real production domain before launch. This
-  // is required for @astrojs/sitemap (below) to generate absolute URLs,
-  // and Layout.astro uses it to build canonical/OpenGraph URLs too - a
-  // placeholder here means both currently emit the wrong domain.
-  site: 'https://www.inkingstoreys.com',
+  // Hosted on GitHub Pages as a project site, not a custom domain:
+  // https://jayesh-swami.github.io/inking-storeys/ (deployed by
+  // .github/workflows/deploy.yml). `site` feeds @astrojs/sitemap and
+  // the canonical/OpenGraph URLs in Layout.astro. `base` must match
+  // the GitHub repo name, since that's the sub-path Pages serves
+  // from - and every root-relative link in src/ has to go through
+  // withBase() (src/lib/url.ts) or it'll point outside the site.
+  site: 'https://jayesh-swami.github.io',
+  base: '/inking-storeys',
 
   vite: {
     // Tailwind v4 is a Vite plugin rather than an Astro integration -

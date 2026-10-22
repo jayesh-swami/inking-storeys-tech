@@ -181,3 +181,22 @@ See also [`AGENTS.md`](./AGENTS.md) for AI-assistant instructions.
   computed to `none` until the value was wrapped in
   `JSON.stringify()` first - confirmed with Playwright against both
   Chromium and Firefox before and after the fix, not assumed.
+
+## 2026-10-02
+
+### Added
+
+- GitHub Actions workflow (`.github/workflows/deploy.yml`) deploying
+  the static build to GitHub Pages on push to `main`. Hosted as a
+  project site at `jayesh-swami.github.io/inking-storeys/` by choice,
+  not a custom domain — replaces the placeholder
+  `www.inkingstoreys.com` in `site`, `robots.txt`, and the README.
+
+### Changed
+
+- `base: '/inking-storeys'` set in `astro.config.mjs`, and every
+  hard-coded root-relative link/`public/` asset path in `src/` now goes
+  through a new `withBase()` helper (`src/lib/url.ts`). Without it, Nav/
+  Footer links, icons, favicons, and the OG image all pointed at the
+  github.io domain root, outside the site. Astro prefixes bundled
+  assets itself; only hand-written paths needed this.

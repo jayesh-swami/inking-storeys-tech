@@ -1,6 +1,7 @@
 ---
 import { ArrowUpRight } from "@lucide/astro";
 import SocialLinks from "./SocialLinks.astro";
+import { withBase } from "../lib/url";
 
 const currentYear = new Date().getFullYear();
 
@@ -9,7 +10,7 @@ const quickLinks = [
   { label: "Projects", href: "/projects" },
   { label: "About", href: "/about" },
   { label: "Contact", href: "/contact" },
-];
+].map((link) => ({ ...link, href: withBase(link.href) }));
 
 const offices = [
   { city: "Mumbai", address: "Bandra Kurla Complex, Mumbai 400051" },
@@ -21,15 +22,15 @@ const offices = [
   <div class="mx-auto grid max-w-7xl gap-14 border-b border-alabaster/10 pb-16 md:grid-cols-12 md:gap-8">
     <div class="md:col-span-5">
       <div class="flex items-center gap-4">
-        <img src="/icon.svg" alt="" class="h-20 w-auto md:h-24" />
-        <img src="/wordmark-animated.svg" alt="Inking Storeys" class="h-20 w-auto md:h-24" />
+        <img src={withBase("/icon.svg")} alt="" class="h-20 w-auto md:h-24" />
+        <img src={withBase("/wordmark-animated.svg")} alt="Inking Storeys" class="h-20 w-auto md:h-24" />
       </div>
       <p class="font-body mt-5 max-w-sm text-sm leading-relaxed text-alabaster/60">
         An architecture and interior design atelier crafting quiet, material-led
         spaces across India — from first sketch to final handover.
       </p>
       <a
-        href="/contact"
+        href={withBase("/contact")}
         class="font-nav mt-8 inline-flex items-center gap-2 border-b border-white pb-1 text-xs uppercase tracking-widest text-white"
       >
         Start a project <ArrowUpRight class="h-4 w-4" />

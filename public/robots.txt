@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://www.inkingstoreys.com/sitemap-index.xml
+Sitemap: https://jayesh-swami.github.io/inking-storeys/sitemap-index.xml

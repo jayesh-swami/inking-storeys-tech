@@ -87,22 +87,22 @@ configuration is needed as long as the source domain stays in
 
 ## Deployment
 
-This is a fully static site (`output: 'static'`, Astro's default) -
-`npm run build` produces a `dist/` directory of plain HTML/CSS/JS/image
-files that can be deployed to any static host (Netlify, Vercel,
-Cloudflare Pages, GitHub Pages, etc) with no server runtime required.
+This is a fully static site (`output: 'static'`, Astro's default),
+hosted on GitHub Pages at <https://jayesh-swami.github.io/inking-storeys/>.
+`.github/workflows/deploy.yml` builds and deploys it on every push to
+`main` (or manually via the Actions tab → "Deploy to GitHub Pages" →
+Run workflow).
 
-Before the first production deploy:
+One-time setup: repo **Settings → Pages → Build and deployment →
+Source: GitHub Actions**.
 
-1. Set the real production domain in `astro.config.mjs`'s `site` field
-   (currently a placeholder) - this feeds the sitemap, canonical URLs,
-   and OpenGraph/Twitter meta tags in `Layout.astro`.
-2. Update `public/robots.txt`'s `Sitemap:` line to match.
-3. Add a default social-share image and wire it into `Layout.astro`'s
-   `image` prop default (see the comment on that prop) - there isn't
-   one yet, so pages that don't pass `image` explicitly currently omit
-   `og:image`/`twitter:image` entirely rather than pointing at a
-   placeholder.
+Because it's served from a sub-path, `astro.config.mjs` sets
+`base: '/inking-storeys'`, which must match the GitHub repo name. Any
+root-relative link or `public/` asset path in `src/` must go through
+`withBase()` from `src/lib/url.ts` (e.g. `href={withBase("/about")}`) -
+a bare `"/about"` would point at `jayesh-swami.github.io/about`, outside
+the site. Imported images and CSS are prefixed by Astro automatically.
+`npm run preview` serves the build under the same base, so check there.
 
 ## Working with AI on this codebase
 

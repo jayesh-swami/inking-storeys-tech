@@ -15,6 +15,7 @@
  */
 import { ArrowUpRight } from "@lucide/astro";
 import SocialLinks from "./SocialLinks.astro";
+import { withBase } from "../lib/url";
 
 const links = [
   { label: "Home", href: "/" },
@@ -22,7 +23,7 @@ const links = [
   { label: "About", href: "/about" },
   { label: "Journal", href: "/journal" },
   { label: "Contact", href: "/contact" },
-];
+].map((link) => ({ ...link, href: withBase(link.href) }));
 
 const desktopLinks = links.filter((link) => link.label !== "Home");
 ---
@@ -43,8 +44,8 @@ const desktopLinks = links.filter((link) => link.label !== "Home");
        specifically. That means there's a brief weight "pop" right when
        the flown-in icon is swapped for this heavier one as the
        preloader is removed - not fixed since it wasn't asked for. -->
-  <a href="/" class="flex items-center gap-3">
-    <img id="nav-icon" src="/icon-nav.svg" alt="Inking Storeys" class="h-11 w-auto md:h-14" />
+  <a href={withBase("/")} class="flex items-center gap-3">
+    <img id="nav-icon" src={withBase("/icon-nav.svg")} alt="Inking Storeys" class="h-11 w-auto md:h-14" />
   </a>
 
   <nav class="hidden items-center gap-8 lg:flex xl:gap-10">

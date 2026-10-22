@@ -88,7 +88,7 @@ configuration is needed as long as the source domain stays in
 ## Deployment
 
 This is a fully static site (`output: 'static'`, Astro's default),
-hosted on GitHub Pages at <https://jayesh-swami.github.io/inking-storeys/>.
+hosted on GitHub Pages at <https://jayesh-swami.github.io/inking-storeys-tech/>.
 `.github/workflows/deploy.yml` builds and deploys it on every push to
 `main` (or manually via the Actions tab → "Deploy to GitHub Pages" →
 Run workflow).
@@ -97,7 +97,7 @@ One-time setup: repo **Settings → Pages → Build and deployment →
 Source: GitHub Actions**.
 
 Because it's served from a sub-path, `astro.config.mjs` sets
-`base: '/inking-storeys'`, which must match the GitHub repo name. Any
+`base: '/inking-storeys-tech'`, which must match the GitHub repo name. Any
 root-relative link or `public/` asset path in `src/` must go through
 `withBase()` from `src/lib/url.ts` (e.g. `href={withBase("/about")}`) -
 a bare `"/about"` would point at `jayesh-swami.github.io/about`, outside

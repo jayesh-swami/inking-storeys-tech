@@ -9,14 +9,14 @@ import sitemap from '@astrojs/sitemap';
 // https://astro.build/config
 export default defineConfig({
   // Hosted on GitHub Pages as a project site, not a custom domain:
-  // https://jayesh-swami.github.io/inking-storeys/ (deployed by
+  // https://jayesh-swami.github.io/inking-storeys-tech/ (deployed by
   // .github/workflows/deploy.yml). `site` feeds @astrojs/sitemap and
   // the canonical/OpenGraph URLs in Layout.astro. `base` must match
   // the GitHub repo name, since that's the sub-path Pages serves
   // from - and every root-relative link in src/ has to go through
   // withBase() (src/lib/url.ts) or it'll point outside the site.
   site: 'https://jayesh-swami.github.io',
-  base: '/inking-storeys',
+  base: '/inking-storeys-tech',
 
   vite: {
     // Tailwind v4 is a Vite plugin rather than an Astro integration -

@@ -200,3 +200,17 @@ See also [`AGENTS.md`](./AGENTS.md) for AI-assistant instructions.
   Footer links, icons, favicons, and the OG image all pointed at the
   github.io domain root, outside the site. Astro prefixes bundled
   assets itself; only hand-written paths needed this.
+
+## 2026-10-22
+
+### Fixed
+
+- `base` changed from `/inking-storeys` to `/inking-storeys-tech` (plus
+  the URL in `robots.txt`, the README, and the config comment). The
+  GitHub repo is named `inking-storeys-tech`, so Pages serves from that
+  sub-path; the old `base` would have 404'd every asset and link.
+  Reworks the 2026-10-02 `base` entry.
+- Note for future deploy failures: an "Invalid YAML front matter in
+  *.astro" error comes from GitHub's built-in Jekyll build, not this
+  workflow — it means Settings → Pages → Source is still "Deploy from a
+  branch" instead of "GitHub Actions".
